@@ -3,6 +3,7 @@
 | 項目 | 內容 |
 |---|---|
 | 文件狀態 | Phase 1 設計交付基準 |
+| 文件修訂 | 1.3（2026-07-21 備份規格決策補完） |
 | 平台 | iOS |
 | 設計來源 | Design System v1.0、Component Library、High Fidelity UI v1.1 Final |
 | 設計基準 | Apple Human Interface Guidelines、iPhone 單手操作、Dynamic Type |
@@ -258,6 +259,15 @@ States：Default、Focused、Filled、Disabled、Error。
 - 文案短，說明資料是否保留與可採取動作。
 - 只用於需要持續顯示的狀態。
 
+### 11.7 Backup Status Card
+
+- 顯示資料儲存位置說明、收藏總筆數與最近一次備份日期。
+- 未曾成功備份時顯示「尚未備份」，不得使用警告紅色或焦慮文案催促。
+- 「匯出備份」與「匯入備份」使用分開的文字動作，不以模糊的「同步」按鈕呈現。
+- 匯入的破壞性確認使用系統 Alert／Confirmation Dialog，不在一般卡片中預設標紅整區。
+- Phase 1 備份固定為不含圖片二進位檔的單一 JSON；格式本身不增加 ZIP／package 選項或額外圖片進度 UI。
+- 匯入錯誤需區分超過 50 MB、checksum 不符、版本過新與內容不完整；版本過新時提供「請更新 App」指引。
+
 ## 12. Chips
 
 ### 12.1 Category Chip
@@ -453,6 +463,8 @@ Forbidden Examples：
 - Daily Recall Card。
 - Metadata Placeholder Card。
 - Status Card。
+- Backup Status Card。
+- Setting Group／Setting Row。
 - Category Chip。
 - Tag Chip。
 - URL Clipboard Notice。
@@ -471,6 +483,8 @@ Forbidden Examples：
 
 - Share Extension Sheet。
 - iOS Share Sheet。
+- iOS File Exporter／Document Picker。
+- 備份匯入預覽 Sheet。
 - Destructive Confirmation Alert。
 - Native Notification Permission Prompt。
 
@@ -487,9 +501,9 @@ Forbidden Examples：
 | 7 | Share Extension | Preview、Category Choice、Tag Field、Pin Toggle、Primary Button |
 | 8 | 洞洞板 | Filter Chips、Pinned Cards、Tab Bar |
 | 9 | 搜尋 | Search Field、Scope Chips、Result Cards |
-| 10 | 設定 | Setting Groups、Daily Recall Status、Tab Bar |
+| 10 | 設定 | Local Storage Notice、Bookmark Count、Last Backup、Data Actions、Daily Recall、Support、About、Tab Bar |
 | 11 | 匯出收藏 | Export Card、Format Choice、Primary Button |
-| 12 | 支持木木 | Support Options、Primary Button |
+| 12 | 支持木木（Future／Optional 設計參考） | 不列入 Phase 1 實作；不得形成購買流程或解鎖核心功能 |
 | 13 | 分類列表 — 有內容 | Header、Menu、Collection Rows |
 | 14 | 分類列表 — 空 | Header、Compact Empty State |
 | 15 | 收藏首頁 — 首次使用 | Home Note、未整理、Compact Empty State |
@@ -502,6 +516,10 @@ Forbidden Examples：
 | 22 | 每日回顧設定 — 已啟用 | Check State、Time Row |
 | 23 | 每日回顧設定 — 權限未開 | Permission Message、System Settings Link |
 | 24 | 今日回顧 | Recall Cards、換一批 |
+| 25 | 匯出備份 | Backup Summary、Primary Button、iOS File Exporter／Share Sheet |
+| 26 | 匯入備份 — 檔案選擇 | Native Document Picker |
+| 27 | 匯入備份 — 預覽與確認 | Backup Date、Bookmark Count、Replacement Warning、Cancel／Replace Actions |
+| 28 | 匯入備份 — 失敗 | Compact Error State、Current Data Preserved Copy、Dismiss／Retry |
 
 ## 25. Navigation Map
 
@@ -517,7 +535,10 @@ flowchart TD
     H["搜尋"] --> F
     I["設定"] --> J["每日回顧設定"]
     I --> K["匯出收藏"]
-    I --> L["支持木木"]
+    I --> O["備份與還原"]
+    O --> P["匯出備份"]
+    O --> Q["匯入備份"]
+    I -. Future optional .-> L["自願支持（未來可選）"]
     M["Daily Recall 通知"] --> N["今日回顧"]
     N --> F
 ```
@@ -546,7 +567,17 @@ flowchart TD
 - [ ] Daily Recall 沒有 Todo／完成語意。
 - [ ] Metadata 所有真實狀態不破版。
 - [ ] 44 pt、Dynamic Type、VoiceOver、Reduce Motion 通過。
-- [ ] 支持木木保留「支持不會解鎖功能。」
+- [ ] Phase 1 不包含支持層級、購買、IAP、會員或任何付費流程。
+- [ ] 設定頁清楚說明資料儲存在本機，不暗示《等等看》代管雲端備份。
+- [ ] 顯示收藏總筆數與最近一次備份日期；未備份時顯示「尚未備份」。
+- [ ] 匯入確認清楚呈現備份日期、收藏筆數及「取代目前資料」警告。
+- [ ] 備份錯誤狀態明確說明現有資料仍保留。
+- [ ] 超過 50 MB、checksum 不符、版本過新與舊版無 migration adapter 均有可理解的錯誤文案。
+- [ ] 版本過新時提示使用者更新 App。
+- [ ] 匯入進行中只停用資料寫入動作；純瀏覽仍可使用。
+- [ ] 回報問題／提供建議使用 Email；隱私權政策與使用條款在正式網址完成前不顯示假連結。
+- [ ] 外觀跟隨系統，不新增手動 Light／Dark 切換。
+- [ ] Phase 1 設定頁不出現會員、Apple／Google／Email 登入、自動同步或《等等看》代管雲端備份入口。
 
 ## 28. Open Design Issues
 
@@ -555,7 +586,22 @@ flowchart TD
 | DES-I01 | 分類管理畫面尚未設計；不得由工程套用一般 CRUD 畫面。 |
 | DES-I02 | 分類列表排序／篩選 Menu 的選項尚未定案。 |
 | DES-I03 | 「看看怎麼收藏」的輕量說明呈現方式尚未定案。 |
-| DES-I04 | App 設定子頁內容未定。 |
-| DES-I05 | 支持木木 StoreKit 購買中、成功、失敗與恢復購買完整狀態需在商品規則確認後補齊。 |
+| DES-I04 | 隱私權政策與使用條款的正式內容與公開網址尚未交付；完成前不得放置假連結。 |
 | DES-I06 | 最終自製 Outline Icon 資產尚未交付；目前符號僅為結構示意。 |
 
+## 29. Commercial UI Boundary
+
+- Phase 1 核心收藏功能永久免費。
+- Phase 1 不設計或實作 StoreKit、IAP、會員、付費牆、支持層級、購買狀態、Product ID 或恢復購買流程。
+- High Fidelity UI v1.1 Final 中既有「支持木木」畫面不修改，僅保留為 Future／Optional 設計參考，不屬於 Phase 1 Screen Scope。
+- 未來若實作自願支持，不得影響或解鎖核心功能，且必須另行建立正式 Design／Interaction 規格。
+- 未來若推出付費服務，只適用於新增且有持續成本的服務，例如跨裝置同步。
+
+## 30. Revision History
+
+| Date | Revision | Change |
+|---|---:|---|
+| 2026-07-21 | 1.3 | 補入 50 MB、checksum、版本相容、Email 回報及公開政策網址狀態；確認 Phase 1 備份為不含圖片二進位檔的單一 JSON。 |
+| 2026-07-20 | 1.2 | 納入 Phase 1 設定頁、備份狀態、匯出／匯入與取代確認元件；核心收藏 UI 與視覺語言不變。 |
+| 2026-07-20 | 1.1 | 將「支持木木」降為 Future／Optional 設計參考；移除 Phase 1 購買與 StoreKit 狀態需求，UI 原檔不變。 |
+| 2026-07-20 | 1.0 | 建立 Phase 1 Design Specification。 |
