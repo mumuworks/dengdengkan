@@ -4,10 +4,13 @@
 |---|---|
 | 文件狀態 | Phase 1 開發基準 |
 | 產品版本 | v1.0 |
+| 文件修訂 | 1.3（2026-07-21 備份規格決策補完） |
 | UI 依據 | High Fidelity UI v1.1 Final |
 | 導覽 | 收藏／洞洞板／搜尋／設定 |
 
 ## 1. Global Interaction Rules
+
+本文件定義 Phase 1 目標互動，不表示 Xcode Project、Share Extension Target 或 App Group 已存在；上述項目目前尚未建立。
 
 - 使用 iOS 原生 NavigationStack、TabView、Sheet、Menu、Share Sheet 與系統通知行為。
 - 所有觸控區至少 44 × 44 pt。
@@ -344,41 +347,91 @@
 
 `lastOpenedAt == nil` 時，CSV 為空值，JSON 為 `null`。
 
-## 16. Settings
+## 16. Backup and Restore
 
-### 16.1 Main Settings
+### 16.1 Export Backup
+
+| 項目 | 規格 |
+|---|---|
+| Trigger | 設定 → 匯出備份。 |
+| User Action | 點「匯出備份」，在 iOS 系統介面選擇儲存或分享位置。 |
+| System Response | 從 Domain Model 建立不含圖片二進位檔的單一 JSON，檔名為 `等等看_Backup_YYYY-MM-DD_HHmm_v1.json`；成功建立後顯示系統 File Exporter／Share Sheet。只有系統回報完成匯出時，才更新「最近一次備份日期」。 |
+| Navigation | 系統介面完成或取消後返回設定。 |
+| Exception Handling | 建檔失敗不開啟空介面；使用者取消不視為失敗，也不更新最近備份日期。App 不判斷目的地是 iCloud Drive、我的 iPhone 或第三方 File Provider。 |
+
+### 16.2 Import Backup — File Selection and Validation
+
+| 項目 | 規格 |
+|---|---|
+| Trigger | 設定 → 匯入備份。 |
+| User Action | 從 iOS Document Picker 選取備份檔。 |
+| System Response | 先檢查檔案不得超過 50 MB，再將選取檔複製至受控暫存位置；驗證 JSON 格式、`schemaVersion`、`modelVersion`、SHA-256 checksum、必要欄位、資料型別、關聯完整性與支援版本。未知非必要欄位忽略；驗證期間不修改正式資料。 |
+| Navigation | 驗證成功 → 匯入預覽；取消 → 設定；驗證失敗 → 錯誤狀態。 |
+| Exception Handling | 無法存取、超過 50 MB、格式錯誤、checksum 不符、檔案不完整、版本不支援或資料關聯無效時停止流程，顯示「沒有匯入，原本的資料都還在。」並清理暫存檔。版本高於 App 支援範圍時提示更新 App；舊版沒有明確 migration adapter 時拒絕，不猜測轉換。 |
+
+### 16.3 Import Preview and Replacement Confirmation
+
+| 項目 | 規格 |
+|---|---|
+| Trigger | 備份檔驗證全部成功。 |
+| User Action | 查看備份建立日期與收藏筆數，選擇「取消」或「取代目前資料」。 |
+| System Response | 清楚警告 Phase 1 將以備份內容取代目前資料；不得預設選中破壞性動作。 |
+| Navigation | 取消 → 設定；確認 → 受保護還原流程。 |
+| Exception Handling | 未確認前不得寫入；合併匯入不得出現在 Phase 1 正式流程。 |
+
+### 16.4 Protected Restore
+
+| 項目 | 規格 |
+|---|---|
+| Trigger | 使用者確認「取代目前資料」。 |
+| User Action | 等待還原完成；進行中不可重複觸發。 |
+| System Response | 先在與正式資料隔離的 staging 區建立完整候選資料，完成所有驗證後才透過受保護的資料取代程序發布；成功後重新載入 App 狀態並顯示「已恢復備份。」匯入期間鎖定主 App 與 Share Extension 的資料寫入，但純瀏覽維持可用。 |
+| Navigation | 成功 → 設定；失敗 → 保留在錯誤結果並可返回設定。 |
+| Exception Handling | 任一步驟失敗即 rollback／放棄 staging；現有正式資料保持不變。不得先清空正式資料再逐筆匯入，也不會自動在使用者的檔案 App 產生額外備份。 |
+
+### 16.5 Backup Status
+
+- 沒有成功匯出或匯入過專用備份：顯示「尚未備份」。
+- 成功完成匯出：顯示最近一次備份日期。
+- 成功匯入並還原：顯示該備份檔的建立日期。
+- CSV／JSON 資料匯出、使用者取消、建檔失敗或分享失敗均不得更新此日期。
+- App 不追蹤備份檔之後被移動、刪除或儲存在哪個 File Provider。
+
+## 17. Settings
+
+### 17.1 Main Settings
 
 | 項目 | 規格 |
 |---|---|
 | Trigger | 點擊設定 Tab。 |
-| User Action | 進入匯出、每日回顧、App 設定、支持木木或關於。 |
-| System Response | 顯示完全本機版設定；每日回顧狀態依系統通知權限與本機設定呈現。 |
+| User Action | 進入資料匯出、匯出備份、匯入備份、每日回顧；以 Email 回報問題／提供建議；開啟隱私權政策、使用條款或相關資訊。 |
+| System Response | 顯示「資料儲存在本機，不上傳《等等看》伺服器」、收藏總筆數、最近一次備份日期或「尚未備份」、App 版本；每日回顧依系統通知權限與本機設定呈現。 |
 | Navigation | Selection Row → 對應子頁。 |
-| Exception Handling | 不顯示登入、同步、雲端備份或 Premium 同步入口。 |
+| Exception Handling | 不顯示 Apple、Google、Email 或其他登入，不顯示會員、自動同步、《等等看》代管備份或 Premium 同步入口。外觀跟隨系統，不顯示手動切換。隱私權政策與使用條款的公開網址完成前不得顯示假連結。 |
 
-### 16.2 Daily Recall Enabled
+### 17.2 Daily Recall Enabled
 
 - 顯示已勾選的「每天提醒我回來看看收藏」。
 - 顯示提醒時間，預設 20:00。
 - 關閉時取消排程。
 
-### 16.3 Notification Permission Disabled
+### 17.3 Notification Permission Disabled
 
 - 顯示「通知權限尚未開啟」。
 - 顯示至少 44 pt 的「前往系統設定」。
 - 從系統設定返回 App 後重新讀取權限狀態。
 
-## 17. Support Mumu
+## 18. Future／Optional Support Boundary
 
-| 項目 | 規格 |
-|---|---|
-| Trigger | 設定 → 支持木木。 |
-| User Action | 選擇支持層級並點「支持木木」。 |
-| System Response | 啟動 StoreKit 購買流程；固定顯示「支持不會解鎖功能。」 |
-| Navigation | 購買完成、取消或失敗後留在原頁。 |
-| Exception Handling | 取消不視為錯誤；失敗顯示短句與重試。Product ID 與恢復規則為 Open Issue。 |
+「支持木木」不列入 Phase 1 Interaction Scope。
 
-## 18. Empty States
+- Phase 1 核心收藏功能永久免費。
+- Phase 1 不提供支持入口、支持層級、購買、恢復購買、IAP、會員或任何付費互動。
+- High Fidelity UI 中既有支持畫面不修改，只作為 Future／Optional 設計參考。
+- 未來若決定實作自願支持，必須另行建立 Trigger、User Action、System Response、Navigation、Exception Handling 與商店規則。
+- 自願支持不得解鎖、限制或改變核心收藏功能。
+
+## 19. Empty States
 
 | 畫面 | 標題 | 說明 | 動作 |
 |---|---|---|---|
@@ -387,25 +440,27 @@
 | 洞洞板 | 洞洞板還是空的。 | 可以把特別想留下來的收藏釘在這裡。 | 無必要動作 |
 | 搜尋 | 沒有找到符合的內容。 | 無 | 清除搜尋 |
 | 今日回顧 | 今天還沒有可回顧的收藏。 | 收藏一些內容後，再回來看看。 | 返回 |
+| 設定／備份 | 尚未備份 | 資料目前保存在這支 iPhone。 | 匯出備份 |
 
-## 19. Loading States
+## 20. Loading States
 
 - Metadata：版型相符的低對比 Skeleton。
 - 匯出：Primary Button 內使用原生 Progress View，保持按鈕寬度。
+- 備份匯出／匯入驗證／受保護還原：顯示不可重複觸發的 Progress 狀態；不得用無進度畫面掩蓋長時間操作。
 - 本機資料載入：低於約 300 ms 不顯示 Loading，避免閃爍。
 - Reduce Motion 開啟時不使用流光動畫。
 
-## 20. Error States
+## 21. Error States
 
 | 層級 | 適用 | System Response | Recovery |
 |---|---|---|---|
 | Inline | 輸入內容無效 | 欄位下方短句，不清除輸入 | 修正後重試 |
-| Recoverable Banner／Card | Metadata、匯出、便條紙儲存等可恢復問題 | 說明發生什麼與資料是否保留 | 再試一次／關閉 |
+| Recoverable Banner／Card | Metadata、匯出、備份、匯入驗證、便條紙儲存等可恢復問題 | 說明發生什麼與資料是否保留 | 再試一次／關閉 |
 | Blocking Alert | 資料庫無法開啟、原文無法開啟、破壞性刪除確認 | 阻擋當前動作，不影響其他本機資料 | 關閉／取消／確認 |
 
 錯誤文案不得顯示技術代碼或責怪使用者。
 
-## 21. Accessibility Interaction
+## 22. Accessibility Interaction
 
 - VoiceOver 順序與視覺順序一致。
 - Icon Button 提供明確 accessibility label。
@@ -414,7 +469,7 @@
 - 支援 Increase Contrast、Reduce Motion、Differentiate Without Color。
 - Light／Dark × 標準／最大字級均需驗收。
 
-## 22. Open Interaction Issues
+## 23. Open Interaction Issues
 
 | ID | Issue |
 |---|---|
@@ -423,6 +478,13 @@
 | INT-I03 | 分類管理流程與排序／篩選 Menu 選項未定。 |
 | INT-I04 | Tag 同名去重與名稱正規化未定。 |
 | INT-I05 | 「看看怎麼收藏」開啟的具體呈現方式未定，但不得改成大型 Onboarding。 |
-| INT-I06 | App 設定子頁內容未定。 |
-| INT-I07 | 支持木木的 StoreKit 商品與恢復購買互動未定。 |
+| INT-I06 | 隱私權政策與使用條款的正式內容與公開網址尚未完成；完成前不得顯示假連結。 |
 
+## 24. Revision History
+
+| Date | Revision | Change |
+|---|---:|---|
+| 2026-07-21 | 1.3 | 固定單一 JSON 備份互動；補齊 50 MB、schema/model version、SHA-256、版本更新提示、migration adapter、寫入鎖、無額外備份與 Email 回報規則。 |
+| 2026-07-20 | 1.2 | 新增專用備份匯出、檔案選擇、驗證、取代確認、原子性還原與設定頁狀態；不修改收藏核心流程。 |
+| 2026-07-20 | 1.1 | 移除 Phase 1 支持層級、StoreKit、Product ID、購買與恢復購買互動；支持畫面僅保留 Future／Optional 參考。 |
+| 2026-07-20 | 1.0 | 建立 Phase 1 Interaction Specification。 |
