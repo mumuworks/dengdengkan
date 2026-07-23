@@ -4,7 +4,9 @@
 
 **Draft — 待 Jenny／ChatGPT（小居）審閱，尚未寫入 Decision Log。**
 
-`docs/DECISION_LOG.md` 目前未存在於本 Repository（已於 2026-07-22 完整掃描所有 branch／commit 確認），本 ADR 不自行取代 Decision Log，僅作為本 Slice 的工程分析與建議，待 Decision Log 補回後由 Jenny／Work 正式採納或修正。
+`docs/DECISION_LOG.md` 於本 ADR 初稿撰寫時尚未存在於本地可見的 Repository 狀態；2026-07-22 已與 `origin/main` 同步（merge commit，包含 `docs/DECISION_LOG.md` rev 1.4 與 Technical Architecture Proposal rev 1.4），確認 `docs/DECISION_LOG.md` 由 Work 正式建立且不需要重建。
+
+**與最新文件的一致性核對（2026-07-22 同步後）**：Technical Architecture Proposal rev 1.4／Decision Log 2026-07-21「備份技術架構去綁定與決策補完」已將 GRDB、SQLite、SwiftData、Core Data 全部列為「尚未選定」候選，明確要求「建立 Xcode 專案時完成持久化選型 ADR」。本 ADR 的獨立比較與草案結論與此要求方向一致，**仍維持 Draft 狀態，不因此自動升級為 Accepted**；是否採納需 Jenny／小居正式審閱後才可寫入 Decision Log。
 
 本 ADR 為重新獨立比較的結果，**不因舊版 `等等看_Technical_Architecture_Proposal_v1.0.md`（ADR-001）曾建議 GRDB 而預設沿用**；若結論相同，屬分析後的巧合而非因襲。
 
