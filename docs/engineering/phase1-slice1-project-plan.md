@@ -2,9 +2,13 @@
 
 ## 狀態
 
-**設計草案，尚未建立 Xcode 專案本體。** 本文件是在無 macOS／Xcode 執行環境下完成的「開發前技術設計包」，供下一步在具備 Xcode 的工程環境中直接落地實作。不包含任何已生成、未經驗證的 `.pbxproj`、entitlements 或大量 Swift 實作檔案。
+**設計草案，尚未建立 Xcode 專案本體。** 本文件是在無 macOS／Xcode 執行環境下完成的「開發前技術設計包」，同時也是唯一的執行 Runbook，供 Jenny／持有 macOS＋Xcode 環境者接手使用。不包含任何已生成、未經驗證的 `.pbxproj`、entitlements 或大量 Swift 實作檔案。
 
-依據：`docs/adr/0001-phase1-slice1-persistence.md`（GRDB.swift 建議，Draft）、PRD、Technical Architecture Proposal、Developer Handoff、Jenny 於 2026-07-22 核准之開發占位識別值。
+依據：`docs/adr/0001-phase1-slice1-persistence.md`（持久化 ADR，Draft）、`docs/DECISION_LOG.md`（rev 1.4，已同步）、`等等看_Technical_Architecture_Proposal_v1.0.md`（rev 1.4）、PRD、Developer Handoff、Jenny 於 2026-07-22 核准之開發占位識別值。
+
+> 本文件原本拆成兩份（設計內容 + 執行拆解），因內容重複已於 2026-07-22 合併為單一文件。
+
+**本階段刻意不做**：不生成 `.pbxproj`、Info.plist、entitlements、任何 `.swift` 實作檔案、`Package.swift`。理由：這些檔案的正確性只有在 Xcode／`xcodebuild`／`swift test` 實際執行後才能驗證，Linux 環境（無 Xcode／swift 工具鏈）生成後無法驗證，容易與 Xcode 精靈實際產生的專案結構打架，徒增接手時的除錯成本。
 
 ## 0. 開發占位識別值（已由 Jenny 核准，非正式 signing 值）
 
@@ -175,26 +179,92 @@ docs/adr/0001-phase1-slice1-persistence.md      [已建立於本階段]
 docs/engineering/phase1-slice1-project-plan.md  [本文件]
 ```
 
-以下**待實作完成後**才會更新，本階段不動：
-`docs/DECISION_LOG.md`（待 Work 補回）、
-`docs/等等看_Technical_Architecture_Proposal_v1.0.md`、
-`docs/等等看_Developer_Handoff_v1.0.md`、
+以下待實作完成後才會更新：
+`等等看_Technical_Architecture_Proposal_v1.0.md`、
+`等等看_Developer_Handoff_v1.0.md`、
 `docs/README_Documentation.md`。
+`docs/DECISION_LOG.md` 已於 2026-07-22 由 Work 同步至 rev 1.4，本階段不需再變動，僅在正式採納持久化 ADR 或其他新決策時，由對應角色新增條目。
 
-## 9. Xcode 建立步驟（供 macOS＋Xcode 環境執行）
+## 9. 執行狀態總覽
 
-1. 建立 iOS App 專案，Product Name `DengDengKan`，Interface = SwiftUI，Bundle ID `com.mumuworks.dengdengkan`，最低部署 iOS 17.0，Team 先留空／None。
-2. 新增 Share Extension Target（File ▸ New ▸ Target ▸ Share Extension），命名 `DengDengKanShareExtension`，Bundle ID `com.mumuworks.dengdengkan.ShareExtension`。
-3. 新增 local Swift Package `DengDengKanCore`，加入主 App 與 Extension 兩個 Target 的依賴。
-4. 於 Apple Developer 帳號（待 Jenny 提供／確認 Team）建立 App Group `group.com.mumuworks.dengdengkan`，並在兩個 Target 的 Signing & Capabilities 加入 App Groups capability，勾選該 group。
-5. 於 Package.swift 加入 GRDB.swift dependency（依 ADR-0001 核准後才加入，版本 pin 建議使用當時最新穩定版並記錄於 `Package.resolved`）。
-6. 建立 Unit Test Target `DengDengKanCoreTests`，依賴 `DengDengKanCore`。
-7. 依第 8 節檔案清單建立各檔案骨架。
-8. `xcodebuild -scheme DengDengKan -destination 'platform=iOS Simulator,name=iPhone 15' build`，確認主 App 與 Extension 皆可編譯。
-9. `xcodebuild test -scheme DengDengKan -destination 'platform=iOS Simulator,name=iPhone 15'`，確認所有測試通過。
-10. 模擬器手動驗證：Safari 分享一個 https URL → 選《等等看》→ 確認寫入成功 → 開啟主 App 確認列表出現該筆收藏。
+| # | 項目 | 狀態 | 說明 |
+|---|---|---|---|
+| 1 | Repository／文件同步確認 | ✅ 已完成 | `origin/main` 已 merge 進工作分支，`DECISION_LOG.md` rev 1.4 確認存在 |
+| 2 | 持久化候選比較 | ✅ 已完成 | `docs/adr/0001-phase1-slice1-persistence.md`，**Draft**，待審閱 |
+| 3 | 開發占位識別值 | ✅ 已核准（Jenny，開發用） | 見第 0 節 |
+| 4 | 專案／Target／分層架構規劃 | ✅ 已完成 | 見第 1–2 節 |
+| 5 | Domain Model 欄位規劃 | ✅ 已完成 | 見第 3 節 |
+| 6 | 跨程序寫入協調設計 | ✅ 已完成 | 見第 4 節，數值待實作校準 |
+| 7 | 最小分享收藏流程設計 | ✅ 已完成 | 見第 5 節 |
+| 8 | 測試計畫（12 類測試對應） | ✅ 已完成 | 見第 7 節 |
+| 9 | 預計檔案清單 | ✅ 已完成 | 見第 8 節 |
+| 10 | Xcode 執行步驟 | ✅ 已完成 | 見第 10 節（B1–B9） |
+| 11 | Xcode Project／Target／Build／Test／模擬器驗證 | ⏳ 待辦 | 需 macOS＋Xcode 環境；Jenny 已確認可接手 |
 
-## 10. 驗收清單（交給下一個可執行 Xcode 的工程環境）
+## 10. Xcode 執行步驟（B1–B9，供 macOS＋Xcode 環境執行）
+
+> 每一步驟附「驗證方式」，請照順序執行、不要跳步。所有 identifier 沿用第 0 節開發占位值，除非 Jenny 另行提供正式值。撰寫時尚未建立任何 `.xcodeproj`、Target 或 Swift 實作檔案，以下步驟不假設它們已存在。
+
+### B1. 建立 Xcode Project
+1. Xcode ▸ File ▸ New ▸ Project ▸ iOS App。
+2. Product Name：`DengDengKan`；Interface：SwiftUI；Language：Swift；Bundle Identifier：`com.mumuworks.dengdengkan`；Minimum Deployments：iOS 17.0。
+3. Team：先選 None／個人帳號（暫不處理正式 signing）。
+4. 存放路徑：Repository 根目錄。
+- **驗證**：Xcode 可正常開啟專案，Scheme 選單出現 `DengDengKan`。
+
+### B2. 建立 Share Extension Target
+1. File ▸ New ▸ Target ▸ Share Extension。
+2. 命名 `DengDengKanShareExtension`，Bundle Identifier 需為 `com.mumuworks.dengdengkan.ShareExtension`（Xcode 通常自動用「主App.ShareExtension」，確認一致）。
+3. Embed in Application：`DengDengKan`。
+- **驗證**：專案 Navigator 出現新 Target，`xcodebuild -list` 顯示兩個 Target。
+
+### B3. 建立 local Swift Package（共用層）
+1. File ▸ New ▸ Package，命名 `DengDengKanCore`，存放於 `Packages/DengDengKanCore`。
+2. 依第 8 節檔案清單，在 Package 內建立 `Domain`、`Repository`、`Persistence`、`UseCase`、`Validation` 資料夾與對應檔案骨架（此時才由接手工程師依第 3 節 Domain Model／Repository 設計實際寫 Swift 程式碼）。
+3. 將 `DengDengKanCore` 加入 `DengDengKan` 與 `DengDengKanShareExtension` 兩個 Target 的 Frameworks and Libraries。
+- **驗證**：`swift build`（在 Package 目錄內）或 Xcode Build 兩個 Target 皆能解析到 `DengDengKanCore` symbol。
+
+### B4. App Group Capability
+1. 於 Apple Developer 帳號建立 App Group `group.com.mumuworks.dengdengkan`（若尚未有可用 Team，先請 Jenny 提供或建立）。
+2. 主 App Target 與 Share Extension Target 的 Signing & Capabilities 都加入 App Groups，勾選該 group。
+3. 確認自動產生的 `.entitlements` 檔案內容一致（兩個 Target 的 App Group identifier 必須完全相同）。
+- **驗證**：兩個 Target 的 entitlements 檔內 `com.apple.security.application-groups` 陣列都包含 `group.com.mumuworks.dengdengkan`。
+
+### B5. 持久化選型落地（先確認 ADR）
+1. 提交 `docs/adr/0001-phase1-slice1-persistence.md` 給 Jenny／小居審閱；**核准前不得執行本步驟以下動作**。
+2. 核准後（若維持 GRDB.swift 結論）：於 `Package.swift` 加入 GRDB.swift dependency，pin 版本並提交 `Package.resolved`。
+3. 依第 4 節實作 `AppGroupDatabase`、`Migrations`（`DatabaseMigrator`）、`GRDBBookmarkRepository`。
+4. 若審閱結果改採其他方案，回頭修改 ADR 狀態為 Accepted（記錄實際結論）並依新方案調整本步驟。
+- **驗證**：`DengDengKanCoreTests` 內的 Repository／Migration 測試可執行且通過（見 B7）。
+
+### B6. 依規劃建立 Swift 原始碼骨架
+依第 3–6 節與第 8 節檔案清單，建立：
+- 主 App：`DengDengKanApp.swift`、`RootView.swift`、`BookmarkListView.swift`、`SettingsPlaceholderView.swift`。
+- Share Extension：`ShareViewController.swift`／SwiftUI Share View、Info.plist 的 `NSExtensionActivationRule`（僅接受 1 個 URL 附件）。
+- Core：`Bookmark.swift`、`Category.swift`、`BookmarkRepository.swift` protocol、`ShareImportUseCase.swift`、`URLValidator.swift`。
+- **驗證**：`xcodebuild build` 主 App／Extension 兩個 Target 皆成功。
+
+### B7. 建立並執行測試
+1. 建立 `DengDengKanCoreTests` Target，依賴 `DengDengKanCore`。
+2. 依第 7 節建立 12 類測試檔案。
+3. 執行：
+   ```
+   xcodebuild test -scheme DengDengKan -destination 'platform=iOS Simulator,name=iPhone 15'
+   ```
+- **驗證**：全部測試通過，包含 App Group 共用、重啟後資料一致、1,000 筆效能、模擬併發寫入。
+
+### B8. 模擬器端到端驗證
+1. 在模擬器開啟 Safari，瀏覽任一 https 網頁。
+2. 分享 ▸ 選《等等看》▸ 確認最小確認畫面／直接完成收藏。
+3. 開啟《等等看》主 App，確認該筆收藏出現在最小收藏列表。
+4. 測試非法內容（例如純文字分享，若系統分享清單仍列出本 App）／格式錯誤字串，確認安全拒絕、不建立資料。
+5. 強制關閉並重啟主 App，確認資料仍存在。
+- **驗證**：對照第 11 節驗收清單逐項打勾。
+
+### B9. 完成後回報
+依原始任務要求的格式回報：ADR 最終結論、實際檔案清單、Build 結果、Test 結果、已知限制、待 Jenny 決策事項、`git diff` 摘要。**不得**自行 Commit／Push／建 PR／Merge，除非 Jenny 明確同意。
+
+## 11. 驗收清單（交給下一個可執行 Xcode 的工程環境）
 
 - [ ] Xcode Project 可正常開啟，無遺失檔案參照。
 - [ ] 主 App Target 可 Build（Debug, iOS Simulator）。
@@ -209,10 +279,13 @@ docs/engineering/phase1-slice1-project-plan.md  [本文件]
 - [ ] 未出現 CloudKit、登入、Server、StoreKit、Analytics SDK、廣告 SDK。
 - [ ] `git diff` 僅包含本 Slice 必要內容（不含未經確認的 signing/profile 檔案）。
 
-## 11. 待 Jenny／小居 決策事項彙總
+## 12. 待 Jenny／小居 決策事項彙總
 
 1. ADR-0001（GRDB.swift 持久化）是否核准；核准後才可加入 GRDB dependency。
-2. `docs/DECISION_LOG.md` 何時由 Work 補回本 repository；補回後需重新核對本文件與其是否一致。
-3. Tags／BookmarkTag 空表是否在 Slice 1 就建立 schema（技術選項，不影響 Slice 1 功能範圍）。
-4. App Group／Bundle ID 何時轉為正式值、由誰持有 Apple Developer Team。
-5. 確認「Xcode 專案建立、Build、Test、模擬器驗證」改由具備 macOS＋Xcode 的工程環境（例如本機 Mac 或 macOS CI runner）執行；本 Claude Code session 若之後取得該環境存取權，可接手第 9 節步驟。
+2. Tags／BookmarkTag 空表是否在 Slice 1 就建立 schema（技術選項，不影響 Slice 1 功能範圍）。
+3. App Group／Bundle ID 何時轉為正式值、由誰持有 Apple Developer Team。
+4. Xcode Project 建立、Build、Test、模擬器驗證由 Jenny 的 macOS＋Xcode 環境接手（依第 10 節 B1–B9 執行），本 Claude Code session（Linux）不執行這部分。
+
+## 13. 交接備註
+
+- 若接手工程師發現本文件的設計與 Xcode 實際狀況有落差（例如 Swift Package 與 Xcode Target 依賴設定的實際限制），應視為正常的設計落地調整，非規格衝突；但若涉及 Domain Model 欄位、Bundle ID／App Group 正式值、持久化最終選型以外的重大變更，仍需依 `AI_TEAM_WORKFLOW.md` 的 Stop Rule 停下確認。
