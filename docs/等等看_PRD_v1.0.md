@@ -4,10 +4,10 @@
 |---|---|
 | 文件狀態 | Phase 1 開發基準 |
 | 產品版本 | v1.0 |
-| 文件修訂 | 1.4（2026-07-21 備份技術架構去綁定與決策補完） |
-| 平台 | iOS |
-| 規格依據 | 產品核心原則、Design System v1.0、High Fidelity UI v1.1 Final |
-| 優先順序 | 最新確認之 High Fidelity UI 與其 Developer Handoff 優先於早期草案 |
+| 文件修訂 | 1.6（2026-08-27 Product Validation 治理收斂、確認 Principle 0、關閉 Web Share Target 決策） |
+| 平台 | Phase 1：Web／PWA；Phase 2（Native）：iOS，保留全部既有 Native 規劃 |
+| 規格依據 | 產品核心原則、Design System v1.0、High Fidelity UI v1.1 Final（視覺與互動語言持續適用，平台改為 Web 實作） |
+| 優先順序 | 最新確認之 High Fidelity UI 與其 Developer Handoff 優先於早期草案；平台細節以 `DECISION_LOG.md` 2026-08-27 決策為準 |
 
 ## 1. Product Vision
 
@@ -28,12 +28,13 @@
 
 產品價值由三件事構成：
 
-1. 收藏速度：從 iOS 分享選單以最少步驟完成保存。
+1. 收藏速度：Phase 1（Web／PWA）從瀏覽器以最少步驟完成保存；Phase 2（Native iOS）透過 Share Extension 從系統分享選單完成保存。
 2. 找回能力：透過分類、標籤與搜尋再次找到內容。
 3. 重新相遇：透過洞洞板與每日回顧重新看到曾經收藏的內容。
 
 ## 3. Product Principles
 
+0. **Principle 0（最高原則，優先於以下所有 Product Principles）：任何功能，都必須回答它是否能讓使用者更快收藏、更容易回顧，或更容易重新找到資訊。如果不能，Phase 1 不納入。**（2026-08-27 決議，見 `DECISION_LOG.md`；本原則優先於 Principle 1–10，衝突時以本原則為準）
 1. 先收藏，再整理。
 2. 少填資料，多使用圖片。
 3. 收藏速度優先於資料完整性。
@@ -70,16 +71,24 @@
 
 ## 6. Product Goals
 
-### 6.1 Phase 1 Goals
+### 6.1 Phase 1 Goals（Web／PWA）
 
 - 讓使用者不登入即可開始收藏。
-- 讓 Share Extension 在零額外輸入下完成收藏。
+- 讓 Web 收藏入口（貼上網址／未來評估 Web Share Target API）在零額外輸入下完成收藏。
 - 讓 Metadata 不完整時仍能立即保存網址。
 - 讓使用者能以分類、標籤與搜尋找回內容。
 - 讓洞洞板保留特別想再次看到的收藏。
-- 以每日一次的本機通知邀請使用者重新觀看收藏。
+- 以應用內「今日回顧」邀請使用者重新觀看收藏；Phase 1 不使用系統推播通知。
 - 讓使用者能免費匯出自己的資料。
-- 讓使用者能以專用備份檔手動備份並在換機或重新安裝後還原資料。
+- 讓使用者能以專用備份檔手動備份並在換機、換瀏覽器或重新安裝 PWA 後還原資料。
+- App 資料完全儲存於瀏覽器本機（IndexedDB），不需要伺服器、登入或跨裝置同步。
+
+### 6.1A Phase 2 Goals（Native iOS，保留規劃，尚未開始）
+
+以下為 Phase 1（2026-07 前）原訂 iOS 目標，全數保留、不刪除，改列為 Phase 2 Native 目標，待 Product Validation（見 §17）判定成功後才開始：
+
+- 讓 Share Extension 在零額外輸入下完成收藏。
+- 以每日一次的 iOS Local Notification 邀請使用者重新觀看收藏。
 - Xcode 專案建立後，主 App 與 Share Extension 需透過 App Group 即時共用本機資料；目前尚未實作。
 
 ### 6.2 Non-goals
@@ -92,41 +101,51 @@
 
 ## 7. MVP Scope
 
-### 7.1 In Scope — Phase 1
+### 7.1 In Scope — Phase 1（Web／PWA）
 
 - Splash。
 - 三頁 Onboarding。
 - 收藏首頁與單一首頁便條紙。
-- iOS Share Extension。
+- Web 收藏入口（貼上網址；Web Share Target API 為技術評估項目，見 Technical Architecture Proposal）。
 - 收藏詳細頁。
 - 分類與分類收藏列表。
 - 自由標籤。
 - 搜尋收藏、分類與標籤。
 - 洞洞板。
-- Daily Recall／每日回顧。
-- iOS Local Notification。
+- Daily Recall／每日回顧（Phase 1 為應用內「今日回顧」，不使用系統推播）。
 - Metadata 擷取與穩定替代狀態。
 - 剪貼簿網址偵測提示。
 - 收藏資料匯出。
 - 專用備份檔匯出與匯入還原。
 - Phase 1 正式設定頁。
-- Light Mode、Dark Mode、Dynamic Type 與無障礙。
-- 完全本機儲存；App Group shared container 為建立專案時要實作的方向，目前尚未建立。
+- Light Mode、Dark Mode、動態文字縮放（瀏覽器 `rem`／文字縮放）與無障礙。
+- Web App Manifest 與 Service Worker，支援「加入主畫面」安裝與離線開啟。
+- 完全本機儲存（瀏覽器 IndexedDB）；無 Server、無登入、無 Cloud Sync、無 Push Notification。
 
-### 7.2 Out of Scope — Phase 1
+### 7.1A In Scope — Native Phase（Phase 2），尚未開始
+
+以下項目為既有 Native iOS 規劃，全數保留、不刪除，待 Product Validation 判定成功後才進入實作：
+
+- iOS Share Extension。
+- iOS Local Notification（取代 Phase 1 應用內今日回顧）。
+- App Group shared container，供主 App 與 Share Extension 共用本機資料；目前尚未建立。
+- Xcode Project／Bundle ID／持久化選型（SwiftData／Core Data／原生 SQLite／GRDB，見 `docs/adr/0001-phase1-slice1-persistence.md`）。
+
+### 7.2 Out of Scope — Phase 1（Web／PWA）
 
 - AI、聊天、摘要、自動標籤與 AI 推薦。
 - 社群、公開頁面、好友或協作。
 - Todo、任務、完成狀態、排程與生產力功能。
 - 週提醒、多次提醒、多組提醒與間隔提醒。
-- Server、Push Server、Firebase 與遠端 APNs 推播。
+- Server、Push Server、Firebase 與遠端推播（含 Web Push）。
 - Apple、Google、Email 或其他登入，以及自建會員系統。
-- 自有雲端儲存、自動備份、自動同步與跨裝置同步。
+- 自有雲端儲存、自動備份、自動同步與跨裝置同步（Cloud Sync）。
 - CloudKit、Google Drive API、Dropbox API、OneDrive API 或其他雲端服務整合。
 - 桌面 Widget 與鎖定畫面 Widget。
 - App 內 Light／Dark 切換。
 - 首頁最近新增、最近瀏覽、大量收藏列表或 Carousel。
 - IAP、會員、訂閱、付費牆與任何 Phase 1 付費流程。
+- iOS Share Extension、App Group、Xcode 專案與原生持久化實作——全數保留為 Phase 2 Native 規劃，不在 Phase 1 開發，見 §7.1A 與 §13。
 
 ## 8. Information Architecture
 
@@ -183,7 +202,12 @@ flowchart TD
 - 自動儲存。
 - 不具備完成、日期、排程或提醒語意。
 
-### 9.3 Share Extension
+### 9.3 收藏入口
+
+#### Phase 1（Web／PWA）
+
+- 收藏入口為應用內「貼上網址」流程：使用者貼上或輸入網址，其餘欄位與規則同下。
+- **正式決策（2026-08-27）：** Phase 1 不承諾 Web Share Target API（讓已安裝 PWA 出現在系統分享清單）；正式收藏入口為貼上網址，未來視需要再評估 Web Share Target API。相容性落差見 Technical Architecture Proposal §23.3。
 
 顯示內容：
 
@@ -204,6 +228,10 @@ flowchart TD
 - 「幫我記住」始終可用。
 - 不顯示大型收藏理由輸入區或其他非必要欄位。
 - 儲存以本機資料寫入成功為完成條件，不等待 Metadata 擷取完成。
+
+#### Native Phase（Phase 2）
+
+- 收藏入口改為 iOS Share Extension：使用者從其他 App 的系統分享選單選擇《等等看》，直接帶入原始網址，其餘規則與 Phase 1 相同。
 
 ### 9.4 Bookmark Detail
 
@@ -279,11 +307,9 @@ flowchart TD
 
 #### 排程
 
-- 使用 iOS Local Notification。
-- 每日固定一次。
-- 預設時間 20:00，可修改。
-- 不支援每週、多次、多組或間隔提醒。
-- 不需要 Server、Push Server、Firebase、遠端 APNs 或雲端同步。
+- **Phase 1（Web／PWA）：** 不使用系統推播通知。每日回顧為開啟 App 時呈現的應用內「今日回顧」，使用者可在設定頁設定提醒時間偏好，但不保證背景喚起；每日固定一次、預設時間 20:00 的邏輯與 Phase 2 相同，差別只在無法在 App 未開啟時主動推播。
+- **Native Phase（Phase 2）：** 使用 iOS Local Notification，每日固定一次、預設時間 20:00，可修改；不支援每週、多次、多組或間隔提醒。
+- 不論 Phase 1 或 Phase 2，均不需要 Server、Push Server、Firebase、遠端 APNs 或雲端同步；Web Push（需要 Push Server）明確排除於 Phase 1 之外。
 
 #### 通知與路由
 
@@ -354,12 +380,12 @@ Phase 1 採「本機儲存＋使用者自主備份檔」模式。
 - 備份檔包含建立日期、App 版本、收藏數量、完整還原所需的收藏、分類、標籤、收藏與標籤關聯、首頁便條紙、Daily Recall 使用者設定、必要 App 設定，以及 payload 的 SHA-256 checksum。
 - checksum 只用於檔案完整性檢查，不代表加密、數位簽章或身分驗證。
 - Phase 1 不封裝圖片二進位檔，只保存圖片 URL、Metadata 與可恢復資料欄位。
-- 完成後開啟 iOS 系統檔案／分享介面，由使用者自行選擇 iCloud Drive、我的 iPhone、Google Drive、Dropbox、OneDrive 或其他系統可用位置。
-- 上述位置由 iOS 與使用者管理；《等等看》不串接服務 API、不取得雲端帳號，也不代管備份。
+- 完成後透過瀏覽器 File System Access API（支援的瀏覽器）或下載檔案的方式，由使用者自行選擇雲端硬碟、本機資料夾或其他可用位置。
+- 上述位置由作業系統／瀏覽器與使用者管理；《等等看》不串接服務 API、不取得雲端帳號，也不代管備份。
 
 #### 匯入備份
 
-- 由設定頁點擊「匯入備份」，透過 iOS 系統檔案選擇器選取備份檔。
+- 由設定頁點擊「匯入備份」，透過瀏覽器檔案選擇器（`<input type="file">` 或 File System Access API）選取備份檔。
 - App 必須在讀取前檢查 50 MB 上限，再驗證檔案類型、`schemaVersion`、`modelVersion`、SHA-256 checksum、必要欄位、資料型別、關聯完整性與可支援版本。
 - 未知非必要欄位忽略；必要欄位缺失或型別錯誤則拒絕匯入。
 - 備份版本高於目前 App 支援版本時拒絕匯入並提示更新 App；舊版只允許經明確 migration adapter 升級，不得猜測轉換。
@@ -383,10 +409,10 @@ Phase 1 設定頁包含：
 - 收藏總筆數。
 - 最近一次備份日期；沒有成功匯出或匯入過專用備份時顯示「尚未備份」。
 - 資料：匯出收藏、匯出備份、匯入備份。
-- 每日回顧：啟用狀態與提醒時間。
+- 每日回顧：啟用狀態與提醒時間（Phase 1 為應用內今日回顧偏好，非系統推播）。
 - 支援：回報問題／提供建議。
-- 關於：App 版本、隱私權政策、使用條款或相關資訊頁。
-- 外觀跟隨 iOS 系統；不新增手動外觀切換。
+- 關於：App 版本（Phase 1 顯示已安裝 PWA 版本）、隱私權政策、使用條款或相關資訊頁。
+- 外觀跟隨系統（作業系統／瀏覽器）Light／Dark；不新增手動外觀切換。
 
 「回報問題／提供建議」採 Email。隱私權政策與使用條款須於 App Store 上架前建立可公開存取的正式網址；網址完成前不得放置假連結。
 
@@ -443,21 +469,37 @@ Phase 1 不顯示 Apple、Google、Email 或其他登入，不顯示自動同步
 - Loading、Disabled、Pressed、Focused、Error。
 - Light／Dark 與標準／Accessibility Dynamic Type。
 
-## 12. Phase 1
+## 12. Phase 1（Web／PWA）
 
-Phase 1 採完全本機儲存：
+Phase 1 採完全本機儲存（瀏覽器 IndexedDB）：
 
 - 不登入。
 - 不建立會員；不顯示 Apple、Google、Email 或其他登入。
-- 不顯示同步狀態。
+- 不顯示同步狀態；無 Cloud Sync。
 - 不提供自動備份、自有雲端儲存或跨裝置同步。
-- 產品方向需要主 App 與 Share Extension 共用本機資料；App Group、Share Extension 與 Xcode Project 目前均尚未建立，須在建立專案時正式設定與驗證。
-- Daily Recall 使用 iOS Local Notification。
-- 使用者可透過 iOS 系統介面手動匯出專用備份檔並匯入還原；備份檔由使用者自行管理。
+- 不需要 Server；不使用 Push Notification／Web Push。
+- Daily Recall 為應用內「今日回顧」，不使用系統推播。
+- 使用者可透過瀏覽器檔案介面手動匯出專用備份檔並匯入還原；備份檔由使用者自行管理。
 - 核心收藏功能、資料匯出與備份／還原永久免費。
 - 不包含 IAP、會員、訂閱、付費牆或支持購買流程。
+- Phase 1 執行拆解為 `P1-C1 Web Foundation`、`P1-C2 Core Collection`、`P1-C3 Backup & Validation`（見 Technical Architecture Proposal）。
+- 進入 Phase 2 Native 的前提是 Product Validation（見 §17）判定成功。
 
-## 13. Phase 2 / Future Roadmap
+## 13. Phase 2 / Future Roadmap（Native iOS，保留規劃）
+
+Phase 2 分兩類：（A）既有 Native iOS 規劃，2026-08-27 起由 Phase 1 改列為 Phase 2，全數保留、不取消；（B）原本就屬於評估中、未承諾的未來項目。以下項目均不在 Phase 1 開發，且只有 Product Validation 判定成功才會啟動 Phase 2 工程。
+
+### 13.1 Native iOS（原 Phase 1 規劃，保留至 Phase 2）
+
+- iOS App、SwiftUI、iOS Share Extension。
+- App Group shared container（主 App 與 Share Extension 共用本機資料）。
+- Bundle ID／App Group Identifier 開發占位值（見 `docs/engineering/phase1-slice1-project-plan.md` §0）。
+- Xcode Project／Target 結構。
+- 持久化選型候選：SwiftData、Core Data、原生 SQLite、GRDB.swift（見 `docs/adr/0001-phase1-slice1-persistence.md`，目前為 Draft，尚未 Accepted）。
+- iOS Local Notification（取代 Phase 1 應用內今日回顧）。
+- 拆解為 `P2-C1 Native Foundation`、`P2-C2 Share Extension`、`P2-C3 Native Persistence`。
+
+### 13.2 評估中、未承諾項目
 
 以下項目僅列入評估，不代表已承諾實作：
 
@@ -513,10 +555,21 @@ Phase 1 可進入下一階段 Technical Architecture 的條件：
 | PRD-I09 | 隱私權政策與使用條款的正式內容與公開網址尚未完成；完成前不得放置假連結。 | 設定頁導向與 App Store 上架資料 |
 | PRD-I11 | Phase 1 是否採用任何經使用者同意的產品分析尚未定義。 | Success Metrics 量測與隱私揭露 |
 
-## 17. Revision History
+## 17. Product Validation
+
+Phase 1（Web／PWA）的存在目的是驗證產品價值，不是最終形態。是否進入 Phase 2 Native 由 Product Validation 判定，完整定義見 `docs/PRODUCT_VALIDATION.md`（單一事實來源；與本 PRD 同為文件集核心文件，見 README §3 Document Hierarchy）。本節僅摘要供 PRD 讀者快速理解：
+
+- **MVP 目標：** 產品作者本人（Jenny）每天實際使用 Phase 1 Web App 收藏與回顧，取代目前分散於瀏覽器書籤、社群收藏與截圖的習慣。
+- **驗證項目（觀察指標，不設固定數字）：** 收藏是否持續增加、Recall 是否自然被使用、收藏是否重新被閱讀、分類是否逐漸穩定、洞洞板是否形成固定使用方式、備份是否讓使用者有安全感。Phase 1 先累積真實使用資料，之後再訂 KPI，不預設固定天數、比例或次數門檻。
+- **成功條件與不成功條件：** 以上述六項指標的趨勢方向判定，見 `docs/PRODUCT_VALIDATION.md` 詳細描述；備份可靠性為阻擋性條件。
+- **Gate：** 只有 Product Validation 判定成功，才開始 Phase 2 Native（P2-C1 起）；判定不成功時，先修正 Phase 1 產品或流程，不直接跳至 Native 開發。
+
+## 18. Revision History
 
 | Date | Revision | Change |
 |---|---:|---|
+| 2026-08-27 | 1.6 | §17 Product Validation 摘要改採觀察指標（移除固定 KPI 措辭）；Product Principle 0 明文定名並聲明優先於 Principle 1–10；正式關閉 Web Share Target API 決策（不承諾，貼上網址為正式入口）。 |
+| 2026-08-27 | 1.5 | Phase 1 平台由 iOS 改為 Web／PWA；Native iOS 全部規劃保留並改列 Phase 2；新增 Product Validation 章節與最高產品原則；新增 `P1-C1~C3`／`P2-C1~C3` Slice 命名。 |
 | 2026-07-21 | 1.4 | 將備份固定為 Domain Model 產生的單一 JSON；補齊 50 MB、schema/model version 1、SHA-256、版本相容、migration adapter、寫入鎖與 rollback 決策；移除資料庫與圖片套件綁定。 |
 | 2026-07-20 | 1.3 | 新增 Phase 1 本機專用備份檔、匯入原子性還原、正式設定頁範圍；明確禁止帳號、登入、雲端服務整合與自動同步。 |
 | 2026-07-20 | 1.2 | 與 Design、Interaction、Developer Handoff、Technical Architecture、README 與 Decision Log 同步 Phase 1 永久免費及 Future／Optional 支持邊界。 |

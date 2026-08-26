@@ -1,18 +1,26 @@
 # 《等等看》Technical Architecture Proposal v1.0
 
 版本：v1.0  
-文件修訂：1.4（2026-07-21 備份技術架構去綁定與決策補完）  
-狀態：架構候選與實作約束（Repository 尚無 Xcode Project／程式碼，技術選型未定）  
-適用範圍：Phase 1（本機優先、無後端）  
+文件修訂：1.6（2026-08-27 關閉 Web Share Target／Dexie Schema 決策，統一 Native Phase 標示格式）  
+狀態：Phase 1（Web／PWA）架構已確認方向；Phase 2（Native iOS）架構候選與實作約束保留，尚未開始  
+適用範圍：Phase 1＝Web／PWA（本機優先、無後端）；Phase 2＝Native iOS（保留規劃，見本文件標記為「Native Phase」之章節）  
+
+> 2026-08-27 更新：依 `DECISION_LOG.md` 同日決策，Phase 1 平台由原生 iOS 改為 Web／PWA。本文件新增「二、Web Phase 1 架構」章節作為現行 Phase 1 的 Source of Truth；原有 iOS 專屬章節（資料持久化選型、App Group、Share Extension、圖片載入、本機通知等）**全數保留、不刪除**，統一標記為「Native Phase（Phase 2）」，作為 Phase 2 啟動時的現成分析。平台無關的內容（資料模型、搜尋概念、Daily Recall 演算法、匯出契約、備份契約）持續適用於兩個 Phase。
 
 ---
 
 ## 一、架構摘要
 
 ### 1.1 已確認方向與待選技術
-- 已確認：原生 iOS App、SwiftUI、本機優先、Share Extension 方向、App Group 方向、JSON 備份、Repository／Domain 邊界、本機通知。
+
+**Phase 1（Web／PWA，現行）**
+- 已確認：Vite + React + TypeScript、Dexie（IndexedDB）、`vite-plugin-pwa`（Web App Manifest + Service Worker）、本機優先、Repository／Domain 邊界、JSON 備份。詳見「二、Web Phase 1 架構」。
+- Phase 1 邊界：無 Server、無登入、無 Cloud Sync、無 Push Notification。
+
+**Native Phase（Phase 2），尚未開始**
+- 已確認方向（保留）：原生 iOS App、SwiftUI、本機優先、Share Extension 方向、App Group 方向、JSON 備份（與 Phase 1 契約相同）、Repository／Domain 邊界、本機通知。
 - 尚未建立：Xcode Project、Swift 程式碼、Share Extension Target、App Group entitlement、本機 store、測試 Target、Migration 機制。
-- 持久化候選：SwiftData、Core Data、原生 SQLite、GRDB；建立 Xcode 專案時依共享存取、migration、效能、測試性與維護成本評估。
+- 持久化候選：SwiftData、Core Data、原生 SQLite、GRDB；建立 Xcode 專案時依共享存取、migration、效能、測試性與維護成本評估（見 `docs/adr/0001-phase1-slice1-persistence.md`，Draft，尚未 Accepted）。
 - 圖片載入候選：Apple 原生能力與第三方套件；Nuke 或其他套件均尚未選定。
 - 原則：Apple 原生能力優先；第三方依賴只在 Xcode 專案建立後，確認原生能力不足且完成 license／security／maintenance 評估時採用。
 
@@ -34,7 +42,9 @@
 
 ---
 
-## 二、資料持久化選型（SwiftData / Core Data / SQLite / GRDB.swift）
+## 二、資料持久化選型（SwiftData / Core Data / SQLite / GRDB.swift）〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）持久化方案為 Dexie（IndexedDB），見「Web Phase 1 架構」章節；本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 | 比較項目 | SwiftData | Core Data | 原生 SQLite | GRDB.swift |
 |---|---|---|---|---|
@@ -94,7 +104,9 @@
 
 ---
 
-## 四、App Group 與並發寫入
+## 四、App Group 與並發寫入〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）為單一瀏覽器分頁／origin 存取同一 IndexedDB，不存在跨 process 並發寫入問題，見「Web Phase 1 架構」章節。本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 本節描述建立 Xcode 專案後必須滿足的行為，不表示 App Group、Share Extension、identifier、shared container 或跨程序鎖已存在。
 
@@ -137,7 +149,9 @@
 
 ---
 
-## 五、Share Extension 架構
+## 五、Share Extension 架構〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）收藏入口為應用內「貼上網址」流程，見「Web Phase 1 架構」章節。本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 1. 接收 URL（NSExtensionItem / NSItemProvider）
 2. URL 驗證（scheme: http/https，長度、格式、防惡意）
@@ -189,7 +203,9 @@
 
 ---
 
-## 七、圖片載入與快取（URLCache/AsyncImage vs Nuke vs Kingfisher vs SDWebImageSwiftUI）
+## 七、圖片載入與快取（URLCache/AsyncImage vs Nuke vs Kingfisher vs SDWebImageSwiftUI）〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）圖片載入採瀏覽器原生 `<img>`／HTTP cache，必要時由 Service Worker 提供 runtime caching（見「Web Phase 1 架構」章節），不引入前端圖片框架。本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 | 項目 | URLCache/AsyncImage | Nuke | Kingfisher | SDWebImageSwiftUI |
 |---|---|---|---|---|
@@ -207,7 +223,9 @@
 
 ---
 
-## 八、UI 架構
+## 八、UI 架構〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）UI 架構見「Web Phase 1 架構」章節（React + react-router）。本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 - SwiftUI + NavigationStack + TabView（四個固定 Tab）
   1. 收藏
@@ -293,7 +311,9 @@
 
 ---
 
-## 十一、本機通知
+## 十一、本機通知〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）不使用系統推播；Daily Recall 為開啟 App 時呈現的應用內「今日回顧」，見「Web Phase 1 架構」章節。本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 - 使用 `UNUserNotificationCenter`
 - `UNCalendarNotificationTrigger`（每日固定時間）
@@ -365,9 +385,12 @@
 
 ## 十四、本機備份與受保護還原
 
+> 本節契約與框架／平台無關，Phase 1（Web／PWA）與 Phase 2（Native iOS）共用同一 Backup Envelope 定義（見 14.3），僅檔案 I/O 機制不同：Phase 1 使用瀏覽器 File System Access API／`<input type="file">`＋下載；Phase 2（保留規劃）使用 iOS File Exporter／Document Picker。理論上兩端輸出的備份檔可互相匯入（schema 相容時）。
+
 ### 14.1 架構邊界
 - Phase 1 採本機 store + 使用者自主備份檔。
-- App 只透過 iOS File Exporter／Document Picker 與系統 File Provider 機制交付或取得檔案。
+- **Phase 1（Web／PWA）：** App 透過瀏覽器 File System Access API（支援的瀏覽器）或 `<input type="file">`＋下載的方式交付或取得檔案。
+- **Native Phase（Phase 2）：** App 透過 iOS File Exporter／Document Picker 與系統 File Provider 機制交付或取得檔案。
 - 不加入 CloudKit、Google Drive API、Dropbox API、OneDrive API、OAuth、自有 Server、帳號或同步 Service。
 - App 不保存目的地、雲端帳號、Provider identifier 或 credential，也不代管備份。
 
@@ -465,6 +488,18 @@ Native Document Picker
 
 ## 十七、Dependency 評估
 
+### 17.1 Phase 1（Web／PWA，已確認）
+
+| 依賴 | 用途 | 狀態 |
+|---|---|---|
+| React、TypeScript | UI 框架 | 已確認，見「Web Phase 1 架構」 |
+| Vite | 建置工具 | 已確認 |
+| Dexie.js | IndexedDB 封裝／Schema 版本化 | 已確認 |
+| `vite-plugin-pwa`（含 Workbox） | Web App Manifest／Service Worker | 已確認 |
+| `react-router` | Client-side Routing | 已確認 |
+
+### 17.2 Native Phase（Phase 2），尚未選定
+
 目前沒有已採用第三方依賴。Xcode 專案建立後，先驗證 Apple 原生能力，再評估候選套件。
 
 | 候選 | 用途 | 目前狀態 | 決策條件 |
@@ -477,7 +512,9 @@ Native Document Picker
 
 ---
 
-## 十八、測試策略
+## 十八、測試策略〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）測試策略見「Web Phase 1 架構」章節。以下為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 - Unit Test：Tag 正規化、URL 驗證、Recall 配比/補位
 - Repository Integration Test：CRUD、持久化一致性、查詢與 migration
@@ -495,7 +532,9 @@ Native Document Picker
 
 ---
 
-## 十九、CI/CD
+## 十九、CI/CD〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）CI/CD 見「Web Phase 1 架構」章節（標準 Node／ubuntu runner，無需 macOS）。以下為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
 
 - GitHub Actions（macOS runner）
   1. Build（App + Extension）
@@ -511,7 +550,9 @@ Native Document Picker
 
 ---
 
-## 二十、實作順序（垂直切片）
+## 二十、實作順序（垂直切片）〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）的實作順序為 `P1-C1 Web Foundation`／`P1-C2 Core Collection`／`P1-C3 Backup & Validation`，見「Web Phase 1 架構」章節。以下 Slice A–F 為原 Phase 1（iOS）規劃，2026-08-27 起改列為 Phase 2 Native 保留規劃，對應新命名為 `P2-C1 Native Foundation`（≈ Slice A／B）、`P2-C2 Share Extension`（≈ Slice B）、`P2-C3 Native Persistence`（≈ Slice A 持久化部分）；細節分工留待 Phase 2 啟動時由小居／小摳重新確認，不在此自動對應。
 
 1. **Slice A：收藏核心閉環**
    - 建立 Xcode Project／Targets，完成持久化選型與 Migration 基礎，再做 Bookmark 新增／列表與未整理分類保護
@@ -545,6 +586,29 @@ Native Document Picker
 
 ## 二十二、Architecture Decision Records（ADR）
 
+> 下表 ADR 皆為 2026-08-27 Web／PWA 轉向前所建立。ADR-001／002／003／008／009 為 iOS Native 技術選型，隨本文件其餘章節一併標記為 Native Phase（Phase 2） 保留規劃；ADR-004／005／006／007／010／011／012 為平台無關的產品或契約決策，Phase 1（Web／PWA）與 Phase 2 共用，繼續有效。
+
+| ADR | Decision | Alternatives | Reason | Consequences | 適用範圍 |
+|---|---|---|---|---|---|
+| ADR-001 | 持久化保持未定 | SwiftData／Core Data／原生 SQLite／GRDB | Repository 尚無 Xcode Project，缺乏實測依據 | 建立專案時完成選型 ADR | Native Phase（Phase 2） |
+| ADR-002 | 圖片載入保持未定，Apple 原生優先 | URLSession／URLCache／AsyncImage／第三方套件 | 尚無實測與依賴基線 | Xcode 專案建立後再決定 | Native Phase（Phase 2） |
+| ADR-003 | Metadata parser 尚未選定，Apple 原生優先 | URLSession／LinkPresentation／第三方 parser | 尚無 Xcode 實測 | 建立專案後形成選型 ADR | Native Phase（Phase 2） |
+| ADR-004 | 系統分類固定 `system-unorganized` | 無系統分類 | 符合刪分類回收規則 | 需雙層保護避免誤刪 | Phase 1 ＋ Phase 2 |
+| ADR-005 | Recall 保留 40／40／20 目標權重，具體取樣待參數確認 | rounding／weighted selection | 每批數量與天數尚未定案 | 不得先固定 1／1／1 | Phase 1 ＋ Phase 2 |
+| ADR-006 | 通知採本機排程，文案輪播策略待定 | 固定文案／多筆預排／App 開啟時重排 | 不引入 Server | 產品確認後形成排程 ADR | Phase 1（應用內今日回顧）＋ Phase 2（本機通知） |
+| ADR-007 | Phase 1 預設不接第三方 analytics | 直接接入第三方 SDK | 隱私與維護風險最低 | 少即時產品分析 | Phase 1 ＋ Phase 2 |
+| ADR-008 | 狀態管理主方案採 `@Observable` | ObservableObject | iOS 17+ 下語意更一致、樣板較少 | 需 iOS 17 baseline | Native Phase（Phase 2） |
+| ADR-009 | Migration 與 Restore 需要跨程序協調 | 僅依賴單一 process 的持久化鎖 | 避免主 App／Extension 競態 | 具體機制待持久化選型 | Native Phase（Phase 2）；Phase 1 為單一瀏覽器 origin，無跨程序協調需求 |
+| ADR-010 | Phase 1 採使用者自主 JSON 備份檔 | 帳號同步／CloudKit／自有 Server | 無持續服務成本、資料主權清楚、符合本機優先 | 使用者需自行保存檔案 | Phase 1 ＋ Phase 2 |
+| ADR-011 | 還原採 Domain staging + 受保護取代 + rollback | 直接清空後逐筆匯入／合併匯入 | 任何失敗都能保留現有資料且不綁資料庫 | 需依最終框架證明取代原子性／一致性 | Phase 1 ＋ Phase 2 |
+| ADR-012 | 備份契約採單一 JSON、50 MB、version 1/1 與 SHA-256 | ZIP／package／直接複製 store | 可攜、可驗證且不綁持久化框架 | 不包含圖片二進位檔；checksum 非加密／驗證身分 | Phase 1 ＋ Phase 2 |
+| ADR-013 | Phase 1 框架採 Vite + React + TypeScript（非 Next.js） | Next.js（App Router） | Phase 1 無 Server／API Routes 需求，Next.js 的核心優勢用不到 | 若 Web Phase 2 需要後端，屆時獨立評估，不影響現有選擇 | Phase 1（Web／PWA） |
+| ADR-014 | Phase 1 持久化採 Dexie（IndexedDB） | 原生 IndexedDB／`idb`／LocalStorage | 與 ADR-001 同構判準：需要 Schema 版本化與交易語意，避免重造 Migration／測試工具 | 單一第三方依賴（Dexie，MIT），需追蹤版本 | Phase 1（Web／PWA） |
+
+（原表格 ADR-001 至 ADR-012 為既有內容，僅補上「適用範圍」欄與新增 ADR-013／014；未刪除或修改既有決策文字。）
+
+<details><summary>原始 ADR-001～012 表格（未修改，供比對）</summary>
+
 | ADR | Decision | Alternatives | Reason | Consequences |
 |---|---|---|---|---|
 | ADR-001 | 持久化保持未定 | SwiftData／Core Data／原生 SQLite／GRDB | Repository 尚無 Xcode Project，缺乏實測依據 | 建立專案時完成選型 ADR |
@@ -560,29 +624,117 @@ Native Document Picker
 | ADR-011 | 還原採 Domain staging + 受保護取代 + rollback | 直接清空後逐筆匯入／合併匯入 | 任何失敗都能保留現有資料且不綁資料庫 | 需依最終框架證明取代原子性／一致性 |
 | ADR-012 | 備份契約採單一 JSON、50 MB、version 1/1 與 SHA-256 | ZIP／package／直接複製 store | 可攜、可驗證且不綁持久化框架 | 不包含圖片二進位檔；checksum 非加密／驗證身分 |
 
+</details>
+
+---
+
+## 二十三、Web Phase 1 架構（現行 Phase 1，Source of Truth）
+
+> 本節內容經 2026-08-27 Decision Log 確認，取代本文件先前以 iOS 為 Phase 1 平台的預設；上方標記「Native Phase（Phase 2）」之章節全數保留為 Phase 2 參考，不刪除。
+
+### 23.1 框架、儲存與 PWA 技術比較
+
+**框架層：Vite + React（SPA）vs Next.js**
+
+Phase 1 完全本機、無帳號、無 Server、無同步；Next.js 的核心優勢（SSR、API Routes、Server Components）在 Phase 1 用不到。採 **Vite + React + TypeScript**（純前端 SPA），透過 `vite-plugin-pwa` 整合安裝與離線能力，與「本機優先、無 Server」原則一致；若未來 Web Phase 2 真的需要後端（例如同步 API），屆時獨立評估，不影響現在的選擇（見 ADR-013）。
+
+**儲存層：LocalStorage vs IndexedDB（原生）vs `idb` vs Dexie.js**
+
+比較邏輯與 ADR-0001（`docs/adr/0001-phase1-slice1-persistence.md`）比較 SwiftData／Core Data／原生 SQLite／GRDB 的邏輯同構：
+
+| 方案 | 評估 |
+|---|---|
+| `LocalStorage` | 同步、字串鍵值、約 5–10MB、無索引；不適合作主要收藏資料庫，僅適合極少量非關鍵 UI 偏好 |
+| `IndexedDB`（原生 API） | 非同步、交易式、支援索引，容量足以承載 1,000–10,000 筆收藏；原生 API 冗長、callback 導向 |
+| `idb` | IndexedDB 的極薄 Promise 包裝；只去 callback 痛點，Migration／查詢／交易仍需自己刻，等同 ADR-0001 中「原生 SQLite」的角色 |
+| **Dexie.js（採用）** | Promise 化查詢建構器＋`db.version(n).stores()` Schema 版本化（對應 GRDB `DatabaseMigrator`）、交易輔助、TypeScript 友善，最貼合 5 張小表、1k–10k 筆規模 |
+
+採用 **Dexie.js**（見 ADR-014）。`LocalStorage` 排除做主資料庫，僅保留給極小量、非關鍵的 UI 暫存值（例如記住上次分頁）。
+
+**PWA 層：Web App Manifest + Service Worker**
+
+兩者是可安裝、可離線 PWA 的必要基礎設施：Manifest 宣告名稱／圖示／`display: standalone`／`theme_color`／`start_url`；Service Worker 負責離線快取 App Shell 與靜態資源。採 **`vite-plugin-pwa`**（底層 Workbox），與 Vite 原生整合、自動產生 Manifest 與 precache manifest；未來若需要更客製化邏輯（例如 Phase 2 評估的背景同步），可切換至其 `injectManifest` 模式。
+
+### 23.2 分層架構
+
+| 層 | 說明 |
+|---|---|
+| 前端架構 | React + TypeScript，函式元件與 hooks；跨元件 UI 狀態（篩選條件、Toast）用輕量方案（如 Zustand）即可，Phase 1 規模不需要重型全域狀態庫 |
+| Router | `react-router`（Client-side），路由對應既有 Bottom Navigation IA：`/`（收藏）、`/board`（洞洞板）、`/search`、`/settings`，加上 `/bookmark/:id` 詳情頁 |
+| Domain | 純 TypeScript 型別（`Bookmark`、`Category`、`Tag`、`BookmarkTag`、`AppSettings`），對應本文件「三、資料模型」與 Developer Handoff §4，與框架、儲存技術無關 |
+| Repository | TypeScript interface（`BookmarkRepository` 等），UI／hooks 一律透過介面存取，不直接碰 Dexie；與原 Phase 1（Native）Repository protocol 同一邊界 |
+| Storage | Dexie 資料庫實作 Repository 介面；`db.version(1).stores({...})` 對應既有 5 張表（bookmarks／categories／tags／bookmarkTags／settings） |
+| Backup | 沿用「十四、本機備份與受保護還原」既有契約（schemaVersion／modelVersion=1、50MB、SHA-256、staging＋受保護取代＋rollback、僅取代不合併、不含圖片二進位檔），檔案 I/O 改用 File System Access API／`<input type="file">` |
+| Settings | 沿用既有 Developer Handoff §4.5／Interaction §17／PRD §9.14 畫面契約；「App 版本」改為已安裝 PWA 版本 |
+
+資料流：`View → Hook/ViewModel → Repository interface → Dexie`，與原 Native 分層精神一致，僅置換底層技術。
+
+### 23.3 已確認決策與剩餘開放問題
+
+**已確認決策（2026-08-27，見 `DECISION_LOG.md`）：**
+
+- **收藏入口（Decision 1）：** Phase 1 不承諾 Web Share Target API。正式收藏入口為「貼上網址」。Web Share Target API 僅在部分 Chromium／Android 已安裝 PWA 上可用，桌面與 iOS Safari 支援不完整，因此不列入 Phase 1 承諾範圍；未來視 Product Validation 結果與瀏覽器支援度再評估，不在本輪重新討論。
+- **Dexie Schema 範圍（Decision 2）：** `P1-C1` 即建立完整 Dexie Schema v1，包含 `bookmarks`／`categories`／`tags`／`bookmarkTags`／`settings` 五張表，即使 `tags`／`bookmarkTags` 在 `P1-C1` 階段尚未於 UI 啟用，也一併建表。目的是避免 `P1-C2` 啟用標籤功能時需要額外一次 Schema Migration。
+
+**剩餘開放問題（Daily Recall 通知平權）：**
+
+- **Daily Recall 無法做到系統推播：** Web Push 需要 Push Server，違反 Phase 1「無 Server」原則。Phase 1 Daily Recall 為開啟 App 才看到的應用內「今日回顧」，不模擬系統通知；通知平權留待 Phase 2 Native（見 ADR-006）。此項為既有技術限制陳述，非待決策事項。
+
+### 23.4 Phase 1 測試策略（對應 §18 Native Phase 版本）
+
+- Unit Test：Domain 型別轉換、URL 驗證、Recall 配比／補位（與 §18 Native 版本邏輯相同，語言改為 TypeScript／Vitest）。
+- Repository Integration Test：Dexie CRUD、Schema migration（`db.version(n)`）。
+- 匯出／備份契約測試：單一 JSON、檔名、50 MB、schema/model version 1、SHA-256、無圖片二進位檔（與 Native Phase 契約相同）。
+- 還原測試：staging 失敗、受保護取代中斷、原資料保持。
+- 資料量測試：0 / 1 / 100 / 1,000 / 10,000。
+- E2E／UI Test：主流程（收藏、搜尋、分類管理、Recall、設定），建議採 Playwright。
+
+### 23.5 Phase 1 CI/CD（對應 §19 Native Phase 版本）
+
+- GitHub Actions（標準 ubuntu runner，無需 macOS）：`npm ci` → Lint（ESLint）→ Type Check（`tsc`）→ Unit Test（Vitest）→ Build（`vite build`）→ E2E smoke（Playwright，可選）。
+- Branch/PR 規則與 Native Phase 相同：PR 必須綠燈才可 merge，至少 1 review。
+
+### 23.6 Phase 1 實作順序（對應 §20 Native Phase 版本）
+
+1. **P1-C1 Web Foundation：** Vite + React + TS 專案骨架、PWA Manifest／Service Worker 可安裝殼層、**完整 Dexie Schema v1**（`bookmarks`／`categories`／`tags`／`bookmarkTags`／`settings` 五張表一次建立，含「未整理」系統分類；`tags`／`bookmarkTags` 尚未於 UI 啟用，僅先建表以避免後續 Migration，見 §23.3 Decision 2）、手動貼上網址收藏、最小收藏列表、空狀態。驗收對照原 Slice A／B：無半筆資料、重新整理後資料仍在、離線可開啟、1,000 筆量級效能檢查。
+2. **P1-C2 Core Collection：** 分類 CRUD、標籤指派與搜尋、洞洞板、收藏詳情（Pin、刪除、開啟原文並更新 `lastOpenedAt`）、Daily Recall 應用內今日回顧（沿用「十、Daily Recall」演算法，移植為 TypeScript）。對應原 Slice D／E 範圍。
+3. **P1-C3 Backup & Validation：** 設定頁、JSON 匯出／匯入（完整沿用十四節契約）、PWA 安裝體驗、Light／Dark、無障礙（對比、Focus、文字縮放）。對應原 Slice F 範圍；完成後進入 Product Validation（見 `docs/PRODUCT_VALIDATION.md`）。
+
 ---
 
 ## 最終輸出（Decision Summary）
 
-### 1) 已確認架構方向
+> 2026-08-27 更新：以下摘要依 Phase 拆分。Phase 1（Web／PWA）為現行架構方向；Phase 2（Native iOS）為保留規劃，尚未開始，內容維持本節先前版本（僅重新分節，未刪改決策文字）。
+
+### 0) Phase 1（Web／PWA，現行）已確認架構方向
+
+- **Vite + React + TypeScript + `react-router` + Dexie（IndexedDB）+ `vite-plugin-pwa` + Repository／Domain 邊界 + 應用內今日回顧 + Domain Model JSON 備份**（見「二十三、Web Phase 1 架構」）。
+- 無 Server、無登入、無 Cloud Sync、無 Push Notification。
+- 收藏入口與 Dexie Schema 範圍已定案（見 23.3 Decision 1／2）；Daily Recall 無系統推播為既有技術限制，非待決策事項。
+- 實作順序：`P1-C1 Web Foundation` → `P1-C2 Core Collection` → `P1-C3 Backup & Validation`，完成後進入 Product Validation（`docs/PRODUCT_VALIDATION.md`），判定成功才啟動 Phase 2。
+
+### 1) Native Phase（Phase 2）已確認架構方向（保留規劃，尚未開始）
+
 - **原生 iOS／SwiftUI + 本機優先 + Repository／Domain 邊界 + App Group／Share Extension 方向 + 本機通知 + Domain Model JSON 備份**。
 - 持久化、圖片載入、Metadata parser、migration 與跨程序鎖的具體方案尚未選定。
 
-### 2) 明確不採用方案
+### 2) 明確不採用方案（Phase 1 ＋ Phase 2 共通）
 - 不直接備份、搬移或替換底層資料庫／store 檔案。
-- 不把 GRDB、SQLite、SwiftData、Core Data、Nuke 或其他第三方套件視為已採用。
-- 不在選型前要求 DatabasePool、WAL 或 checkpoint。
+- 不把 GRDB、SQLite、SwiftData、Core Data、Nuke 或其他第三方套件視為已採用（Phase 2）；Phase 1 不引入 Next.js、原生 IndexedDB 手刻方案或 LocalStorage 作主資料庫。
+- 不在選型前要求 DatabasePool、WAL 或 checkpoint（Phase 2）。
 - 不在備份中使用 ZIP／package、Base64 圖片或圖片二進位附件。
-- 不採 Phase 1 帳號、OAuth、CloudKit、自有雲端備份或自動同步架構
+- 不採帳號、OAuth、CloudKit、自有雲端備份或自動同步架構；Phase 1 亦不採 Web Push／Push Server。
 
-### 3) 尚待產品決策的事項
+### 3) 尚待產品決策的事項（Phase 1 ＋ Phase 2 共通）
 - 重複 URL 是否允許
 - Daily Recall 邀請門檻、每批數量、從未開啟最低天數、最近池範圍與同日換批上限
 - 分類管理／排序／刪除轉移、Tag 正規化與 CSV 多 Tag 格式
-- 通知固定文案或多文案重排策略
+- 通知固定文案或多文案重排策略（Phase 2）
 - 隱私權政策與使用條款的正式內容與公開網址；完成前不得放置假連結
 
-### 4) Phase 1 建立專案時的工程決策
+> 2026-08-27 已關閉：Web Share Target API 是否列入 Phase 1 承諾範圍——已決定不承諾，正式收藏入口為貼上網址（見 23.3 Decision 1）；Dexie Schema 是否於 `P1-C1` 建立 `tags`／`bookmarkTags` 空表——已決定於 `P1-C1` 一次建立完整 Schema（見 23.3 Decision 2）。
+
+### 4) Phase 2 建立 Xcode 專案時的工程決策（保留規劃，待 Product Validation 成功後啟動）
 - 建立 Xcode Project、主 App Target、Share Extension Target 與測試 Target。
 - 確認 bundle IDs、App Group identifier、entitlements 與 iOS deployment target。
 - 依需求比較 SwiftData、Core Data、原生 SQLite、GRDB；形成持久化 ADR 後才實作 store 與 migration。
@@ -591,10 +743,12 @@ Native Document Picker
 - 建立可跨主 App／Extension 的 exclusive write gate；具體鎖機制必須通過實測後定案。
 - 確認通知文案初版。
 
-前置條件確認後，由小居整合規格與小摳的 Repository／Reuse Analysis，再指定 Claude Code 或 Codex 其中一位負責實作；不得同時修改同一 Repository。完成後必須通過 GitHub Actions，再交由 Jenny 驗收。
+前置條件確認後，由小居整合規格與小摳的 Repository／Reuse Analysis，再指定 Claude Code 或 Codex 其中一位負責實作；不得同時修改同一 Repository。完成後必須通過 GitHub Actions，再交由 Jenny 驗收。此流程於 Phase 1（Web）與 Phase 2（Native）皆適用。
 
-### 5) 建議第一個垂直開發階段
-- **Slice A：建立專案基礎與收藏核心閉環（Targets + 持久化選型 ADR + Migration 基礎 + Bookmark + 未整理分類保護 + 基礎列表）**
+### 5) 建議的第一個垂直開發階段
+
+- **Phase 1（現行）：`P1-C1 Web Foundation`** — 見「二十三、Web Phase 1 架構」23.6。
+- **Phase 2（保留規劃，待啟動）：`P2-C1 Native Foundation`（原 Slice A：建立專案基礎與收藏核心閉環）**
 
 ---
 
@@ -602,6 +756,8 @@ Native Document Picker
 
 | Date | Revision | Change |
 |---|---:|---|
+| 2026-08-27 | 1.6 | §23.3 由「開放技術問題」改寫為「已確認決策」：關閉 Web Share Target API（不承諾）與 Dexie Schema 範圍（`P1-C1` 一次建立完整 Schema）兩項決策；Decision Summary 移除已關閉待決事項；全文「Native Phase（Phase 2）」標示格式統一。 |
+| 2026-08-27 | 1.5 | Phase 1 平台由原生 iOS 改為 Web／PWA；新增「二十三、Web Phase 1 架構」（Vite/React/TS/Dexie/vite-plugin-pwa）作為現行 Source of Truth；原有 iOS 持久化、App Group、Share Extension、圖片載入、本機通知、測試、CI/CD、Slice A–F 章節保留並標記 Native Phase（Phase 2）；新增 ADR-013／014；Decision Summary 依 Phase 拆分。 |
 | 2026-07-21 | 1.4 | 依 Repository 盤點撤回 GRDB／SQLite／Nuke 等既定技術；改為候選與條件式注意事項；備份固定為 Domain Model 單一 JSON，補齊 50 MB、version 1/1、SHA-256、migration adapter、寫入鎖、受保護取代與 rollback。 |
 | 2026-07-20 | 1.3 | 新增使用者自主備份檔、獨立 schemaVersion、原生檔案介面、staging 與原子性還原架構；明確排除帳號、OAuth、雲端 API 與自動同步。 |
 | 2026-07-20 | 1.2 | 同步最新版 AI Team Workflow 與阿克／扣哥單一工程師實作原則。 |

@@ -3,10 +3,10 @@
 | 項目 | 內容 |
 |---|---|
 | 文件狀態 | Phase 1 設計交付基準 |
-| 文件修訂 | 1.3（2026-07-21 備份規格決策補完） |
-| 平台 | iOS |
-| 設計來源 | Design System v1.0、Component Library、High Fidelity UI v1.1 Final |
-| 設計基準 | Apple Human Interface Guidelines、iPhone 單手操作、Dynamic Type |
+| 文件修訂 | 1.5（2026-08-27 Native Phase（Phase 2）標示格式統一） |
+| 平台 | Phase 1：Web／PWA（響應式，行動優先）；Phase 2（Native）：iOS，保留全部既有規劃 |
+| 設計來源 | Design System v1.0、Component Library、High Fidelity UI v1.1 Final（視覺語言持續適用，Phase 1 以 Web／CSS 實作） |
+| 設計基準 | Phase 1：WCAG／瀏覽器無障礙 API、行動優先響應式版面；Phase 2（保留）：Apple Human Interface Guidelines、iPhone 單手操作、Dynamic Type |
 
 ## 1. Design Direction
 
@@ -92,7 +92,9 @@ Rules：
 
 ## 4. Typography
 
-使用 iOS 系統字體 SF Pro；繁體中文由系統提供相容字型。不嵌入品牌字體。
+**Phase 1（Web／PWA）：** 使用系統字體堆疊（`-apple-system, "Segoe UI", "PingFang TC", "Noto Sans TC", system-ui, sans-serif`），不嵌入品牌字體，讓不同作業系統（macOS／Windows／Android／iOS 瀏覽器）都以各自原生字型呈現，繁體中文優先使用系統提供的相容字型。
+
+**Native Phase（Phase 2）：** 使用 iOS 系統字體 SF Pro；繁體中文由系統提供相容字型。不嵌入品牌字體。
 
 | Token | iOS Text Style | Base Size / Line Height | Weight | Usage |
 |---|---|---:|---|---|
@@ -311,7 +313,7 @@ Category 與 Tag 即使同名，仍以標題、元件層級與樣式辨識。
 
 Rules：
 
-- 使用 iOS 原生 Tab Bar 與 Safe Area。
+- Phase 1（Web）使用 CSS 固定定位模擬 Tab Bar 並對應安全區域；Phase 2（Native，保留規劃）使用 iOS 原生 Tab Bar 與 Safe Area。
 - 不做浮動膠囊或第五個中央按鈕。
 - Selected：`brand.primary` 加 2 pt Outline。
 - Unselected：`text.secondary` 加 1.5 pt Outline。
@@ -363,13 +365,24 @@ Structure：Short Title → One-line Explanation → Optional Single Action。
 
 ## 19. Dark Mode
 
-- 跟隨 iPhone 系統。
+- Phase 1（Web）跟隨作業系統／瀏覽器 `prefers-color-scheme`；Phase 2（Native，保留規劃）跟隨 iPhone 系統。
 - 不提供 App 內切換。
 - 所有 Component 與 24 個畫面需提供 Light／Dark 驗收。
 - Dark Mode 以深暖黑與深棕 Surface 保留溫度，不使用純黑大面積替代全部 Surface。
 - Shadow、Border、Placeholder 與文字對比使用 Dark Token。
 
 ## 20. Dynamic Type
+
+**Phase 1（Web／PWA）：** 主要文字尺寸使用相對單位（`rem`），跟隨瀏覽器文字縮放設定（等同 iOS Dynamic Type 的 Web 對應）；規則與 Native 版本相同：
+
+- Card Height 隨文字增長。
+- 不固定高度裁切重要內容。
+- 水平結構在放大文字尺寸下可改垂直。
+- 洞洞板預設雙欄；放大文字尺寸起依可用寬度改單欄。
+- Tab、Button 與 Selection Row 保留至少 44 × 44 px 觸控區。
+- 洞洞板為阻擋性文字縮放驗收畫面。
+
+**Native Phase（Phase 2）：**
 
 - 所有主要內容使用 iOS Text Style。
 - Card Height 隨文字增長。
@@ -481,11 +494,19 @@ Forbidden Examples：
 
 ### 23.7 Sheets
 
+Phase 1（Web）：
+
+- 收藏輸入 Sheet／Modal（貼上網址）。
+- 瀏覽器分享／下載介面（File System Access API 或下載檔案）。
+- 瀏覽器檔案選擇器（`<input type="file">`）。
+- 備份匯入預覽 Sheet。
+- Destructive Confirmation Dialog。
+
+Native Phase（Phase 2）：
+
 - Share Extension Sheet。
 - iOS Share Sheet。
 - iOS File Exporter／Document Picker。
-- 備份匯入預覽 Sheet。
-- Destructive Confirmation Alert。
 - Native Notification Permission Prompt。
 
 ## 24. Screen Inventory
@@ -498,7 +519,7 @@ Forbidden Examples：
 | 4 | Onboarding — 找回 | Search Symbol、Copy、Pager |
 | 5 | 收藏首頁 | Home Note、Category Preview Cards、Tab Bar |
 | 6 | 收藏詳細頁 | Hero、Reason Note、Category Chip、Tag Chips、Actions |
-| 7 | Share Extension | Preview、Category Choice、Tag Field、Pin Toggle、Primary Button |
+| 7 | 收藏輸入（Phase 1：貼上網址；Phase 2：Share Extension，保留規劃） | Preview、Category Choice、Tag Field、Pin Toggle、Primary Button |
 | 8 | 洞洞板 | Filter Chips、Pinned Cards、Tab Bar |
 | 9 | 搜尋 | Search Field、Scope Chips、Result Cards |
 | 10 | 設定 | Local Storage Notice、Bookmark Count、Last Backup、Data Actions、Daily Recall、Support、About、Tab Bar |
@@ -543,7 +564,20 @@ flowchart TD
     N --> F
 ```
 
-## 26. Auto Layout / SwiftUI Layout Rules
+## 26. Layout Rules
+
+### 26.1 Web／CSS Layout Rules（Phase 1）
+
+- Design Frame 以 390 × 844 px 為行動優先基準，使用響應式版面，不鎖死裝置尺寸；桌面寬螢幕內容置中並限制最大寬度。
+- 使用 CSS `env(safe-area-inset-*)` 對應行動瀏覽器安全區域。
+- 頁面主內容以 Flexbox／Grid 垂直排列與可捲動容器組成。
+- Card Width 使用容器相對寬度（`%`／`fr`）。
+- 圖片使用明確 `aspect-ratio`；Card 總高由內容決定。
+- Category Card 的文字區可壓縮圖片預覽，但不可截斷名稱與收藏數。
+- Button、Field、Row 設 `min-height`，不設阻止文字縮放的 Fixed Height。
+- 洞洞板使用 CSS Grid（Adaptive）；小寬度或放大文字尺寸改單欄。
+
+### 26.2 Auto Layout / SwiftUI Layout Rules（Phase 2，Native iOS，保留規劃）
 
 - Design Frame 以 390 × 844 pt 為基準，不鎖死裝置尺寸。
 - 使用 Safe Area。
@@ -601,6 +635,8 @@ flowchart TD
 
 | Date | Revision | Change |
 |---|---:|---|
+| 2026-08-27 | 1.5 | 統一全文 Native 內容標示格式為「Native Phase（Phase 2）」，取代先前「Phase 2（Native iOS，保留規劃）」等不一致寫法；無內容變更。 |
+| 2026-08-27 | 1.4 | Phase 1 平台由 iOS 改為 Web／PWA：Typography、Dynamic Type、Layout Rules、Dark Mode、Bottom Navigation 與 Sheets 元件依 Phase 拆分；Native iOS 規劃保留並標記 Phase 2。視覺語言與 Design Tokens 不變。 |
 | 2026-07-21 | 1.3 | 補入 50 MB、checksum、版本相容、Email 回報及公開政策網址狀態；確認 Phase 1 備份為不含圖片二進位檔的單一 JSON。 |
 | 2026-07-20 | 1.2 | 納入 Phase 1 設定頁、備份狀態、匯出／匯入與取代確認元件；核心收藏 UI 與視覺語言不變。 |
 | 2026-07-20 | 1.1 | 將「支持木木」降為 Future／Optional 設計參考；移除 Phase 1 購買與 StoreKit 狀態需求，UI 原檔不變。 |
