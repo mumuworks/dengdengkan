@@ -4,14 +4,15 @@
 |---|---|
 | 文件狀態 | Phase 1 工程交付基準 |
 | 產品版本 | v1.0 |
-| 文件修訂 | 1.5（2026-07-21 備份技術架構去綁定與決策補完） |
+| 文件修訂 | 1.7（2026-08-27 關閉 DEV-I13／I14；標籤標示統一為 Native Phase（Phase 2）） |
 | UI 依據 | High Fidelity UI v1.1 Final |
-| 儲存範圍 | 本機優先；主 App／Share Extension／App Group 為待建立方向，尚未實作 |
-| 下一階段 | Technical Architecture 與 Repository／Reuse Analysis |
+| 平台 | Phase 1：Web／PWA（瀏覽器本機 IndexedDB）；Phase 2（Native）：iOS，主 App／Share Extension／App Group 保留規劃，尚未實作 |
+| 儲存範圍 | Phase 1 本機優先（瀏覽器 IndexedDB）；Phase 2 主 App／Share Extension／App Group 為保留待建立方向 |
+| 下一階段 | Web Technical Architecture 已定案（見 Technical Architecture Proposal §23）；Repository／Reuse Analysis 適用於 Phase 1 前端工具鏈 |
 
 ## 1. Engineering Boundary
 
-本文件由 ChatGPT（小居）確認產品／系統規格，並由 ChatGPT Work 完成跨文件整理與一致性治理。本文件定義邏輯資料模型、狀態、商業規則、驗證、流程與非功能需求。實際持久化框架、Repository 實作、URL Metadata 解析方案與通知排程策略，須由 GitHub Copilot（小摳）完成 Repository／官方能力／成熟方案研究後定案，再指定 Claude Code 或 Codex（阿克／扣哥）其中一位實作。
+本文件由 ChatGPT（小居）確認產品／系統規格，並由 ChatGPT Work 完成跨文件整理與一致性治理。本文件定義邏輯資料模型、狀態、商業規則、驗證、流程與非功能需求，Phase 1（Web）與 Phase 2（Native iOS）共用。實際前端框架、Repository 實作、URL Metadata 解析方案與通知排程策略，須由 GitHub Copilot（小摳）完成 Repository／官方能力／成熟方案研究後定案，再指定 Claude Code 或 Codex（阿克／扣哥）其中一位實作。文件中標記「Native Phase（Phase 2）」的段落為既有 iOS 工程規劃，全數保留、不刪除。
 
 Phase 1 不得加入：
 
@@ -25,6 +26,19 @@ Phase 1 不得加入：
 - IAP、會員、訂閱、付費牆、支付或購買流程。
 
 ## 2. Platform and Native Capabilities
+
+### 2A. Phase 1（Web／PWA，現行）
+
+Phase 1 優先評估瀏覽器原生能力，技術方向已於 Technical Architecture Proposal §23 確認：
+
+- React、TypeScript、`react-router`。
+- IndexedDB（透過 Dexie.js 封裝）。
+- Web App Manifest ＋ Service Worker（`vite-plugin-pwa`），支援安裝與離線開啟。
+- `<input type="file">`／File System Access API（匯出入備份、匯出收藏）。
+- `navigator.share`（若支援）作為分享輔助，非必要依賴。
+- 單一瀏覽器 origin 儲存模型：無需 App Group，同一 origin 下所有頁面／Service Worker 共用同一份 IndexedDB。
+
+### 2B. Native Phase（Phase 2）
 
 建立 Xcode 專案時優先評估 Apple 原生能力：
 
@@ -43,9 +57,11 @@ Phase 1 不得加入：
 
 Apple 原生能力優先。任何第三方套件，包括 GRDB、Nuke 或其他圖片／資料套件，必須在 Xcode 專案建立後依實際需求、相容性、安全、維護成本與原生替代方案評估，現階段不得視為已採用依賴。
 
-## 3. App Group
+## 3. App Group〔Native Phase（Phase 2），保留規劃〕
 
-本節是 Phase 1 產品需求方向，不表示 Repository 已存在 App Group、Share Extension、entitlement 或共享 store。目前 Xcode Project、Swift 程式碼、Share Extension、App Group、持久化 store、測試 Target 與 Migration 機制均尚未建立。
+> Phase 1（Web／PWA）不需要 App Group：單一瀏覽器 origin 下的所有頁面與 Service Worker 已共用同一份 IndexedDB，不存在跨程序共享問題，見 §2A。本節為 iOS Native Phase 2 保留規劃，不適用於現行 Phase 1，不刪除。
+
+本節是既有 Phase 1（iOS）產品需求方向，2026-08-27 起改列 Phase 2；不表示 Repository 已存在 App Group、Share Extension、entitlement 或共享 store。目前 Xcode Project、Swift 程式碼、Share Extension、App Group、持久化 store、測試 Target 與 Migration 機制均尚未建立。
 
 ### 3.1 Requirements
 
@@ -179,7 +195,9 @@ pending  -> failed    (timeout/unrecoverable fetch)
 
 `resolved` 不代表每個欄位都有值；網站可能合法地沒有圖片或標題。
 
-### 5.2 NotificationAuthorizationState
+### 5.2 NotificationAuthorizationState〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）不請求系統通知權限，Daily Recall 為應用內偏好（`dailyRecallEnabled`），不存在此狀態機。以下為 Phase 2 保留規劃。
 
 由 iOS 系統回傳並映射：
 
@@ -231,7 +249,7 @@ UI 至少區分：未詢問、可用、權限未開。
 
 ### BR-001 Local First
 
-Phase 1 所有使用者資料儲存在本機；Xcode 專案建立後，主 App 與 Share Extension 共享所需資料的方向為 App Group shared container。目前 App Group 尚未建立，且不要求帳號或登入。
+Phase 1（Web／PWA）所有使用者資料儲存在瀏覽器本機 IndexedDB，單一 origin 下的頁面與 Service Worker 共用同一份資料，不要求帳號或登入。Phase 2（Native iOS，保留規劃）延續本機優先原則；Xcode 專案建立後，主 App 與 Share Extension 共享所需資料的方向為 App Group shared container，目前尚未建立。
 
 ### BR-002 Bookmark Completion
 
@@ -467,7 +485,24 @@ stateDiagram-v2
 - UI 顯示 URL、Placeholder 與「網址已保留」。
 - 不以無限重試消耗電量或網路。
 
-## 10. Share Extension Flow
+## 10. 收藏入口 Flow
+
+### 10.0 Phase 1（Web／PWA，現行）：貼上網址 Flow
+
+```mermaid
+flowchart TD
+    A["使用者貼上網址"] --> B["Build preview"]
+    B --> C["Default category: 未整理"]
+    C --> D["Optional category / tags / pin"]
+    D --> E["Repository write (Dexie transaction)"]
+    E -->|Success| F["幫你記住了"]
+    E -->|Failure| G["保留輸入並允許重試"]
+    F --> H["Metadata continues locally"]
+```
+
+- 單一瀏覽器 origin，不需跨程序協調；寫入使用 Dexie 交易，失敗不留半筆資料。
+
+### 10.1 Native Phase（Phase 2）：Share Extension Flow
 
 ```mermaid
 flowchart TD
@@ -480,7 +515,7 @@ flowchart TD
     F --> H["Metadata continues locally"]
 ```
 
-### 10.1 Extension Limits
+#### Extension Limits
 
 - 不依賴主 App 正在執行。
 - 避免大型記憶體圖片解碼。
@@ -614,7 +649,9 @@ Phase 1 固定使用單一 JSON 專用備份檔；檔名為 `等等看_Backup_YY
 
 錯誤 log 不得包含收藏原文、Reason、Tag、完整 URL 或備份檔內容。
 
-## 13. Notification Rules
+## 13. Notification Rules〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）不使用系統通知；Daily Recall 為使用者開啟 App 時看到的應用內「今日回顧」，僅需持久化 `dailyRecallEnabled` 與偏好時間（用於顯示邏輯，非系統排程）。以下為 Phase 2 保留規劃。
 
 ### 13.1 Permission
 
@@ -640,8 +677,8 @@ Phase 1 固定使用單一 JSON 專用備份檔；檔名為 `等等看_Backup_YY
 ### 14.1 General Rules
 
 - 備份 envelope 相容性變更提高 `schemaVersion`；Domain Model 相容性變更提高 `modelVersion`。第一版均為 `1`。
-- 底層持久化 migration 版本由最終選定框架另行管理，不得直接等同備份 `schemaVersion` 或 `modelVersion`。
-- Migration 必須在未來建立的主 App 與 Share Extension 間一致理解。
+- 底層持久化 migration 版本由最終選定框架另行管理，不得直接等同備份 `schemaVersion` 或 `modelVersion`。Phase 1 為 Dexie `db.version(n)`；Phase 2（保留規劃）為最終選定的 iOS 持久化框架。
+- Migration 必須在（Phase 1）同一 origin 的所有頁面／Service Worker，或（Phase 2，保留規劃）未來建立的主 App 與 Share Extension 間一致理解。
 - Migration 前不得破壞原資料。
 - 失敗時不得建立空 store 覆蓋舊 store。
 - 建議保留可恢復備份或使用持久化框架的安全 migration 能力。
@@ -672,9 +709,9 @@ Phase 1 固定使用單一 JSON 專用備份檔；檔名為 `等等看_Backup_YY
 
 ### 15.2 Storage
 
-- Shared container 使用 iOS Data Protection 能力。
+- Phase 1（Web）：IndexedDB 資料僅存於使用者裝置瀏覽器 origin，不上傳伺服器；瀏覽器的沙盒與同源政策提供隔離。Phase 2（Native，保留規劃）：Shared container 使用 iOS Data Protection 能力。
 - 不將完整收藏資料寫入 Console、Analytics 或 Crash log。
-- 不在通知內容中顯示敏感收藏標題；Final 文案採一般性文字。
+- 不在通知內容中顯示敏感收藏標題（Phase 2）；Final 文案採一般性文字。
 - 匯出檔可能含私人資料，僅由使用者主動觸發。
 
 ### 15.3 URL Handling
@@ -684,10 +721,12 @@ Phase 1 固定使用單一 JSON 專用備份檔；檔名為 `等等看_Backup_YY
 - 開啟外部 URL 使用系統安全 API。
 - Metadata 內容視為不可信輸入，需限制長度並避免 HTML／script 注入到任何 WebView。
 
-### 15.4 Share Extension
+### 15.4 Share Extension〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）無 Share Extension，此節不適用；見 §2A 與 §10.0。
 
 - App Group 建立後，其 identifier 不得提交錯誤環境或 Team 設定；目前尚無 identifier、entitlement 或 Target。
-- 不在 Extension 暴露 secret；Phase 1 不需要 Server credential。
+- 不在 Extension 暴露 secret；不需要 Server credential。
 
 ### 15.5 Export and Backup
 
@@ -701,7 +740,9 @@ Phase 1 固定使用單一 JSON 專用備份檔；檔名為 `等等看_Backup_YY
 
 ### 15.6 Third-party Dependencies
 
-Apple 原生能力優先。Xcode 專案建立後，研究任何 Package 時必須檢查：維護狀態、License、安全紀錄、依賴負擔、資料傳輸、隱私與是否真的優於原生能力。GRDB、Nuke 與其他第三方套件目前均尚未選定。
+**Phase 1（Web，已確認）：** React、Vite、Dexie.js、`vite-plugin-pwa`、`react-router`（見 Technical Architecture Proposal §23／§17.1）；新增依賴仍須檢查維護狀態、License、安全紀錄與資料傳輸。
+
+**Native Phase（Phase 2）：** Apple 原生能力優先。Xcode 專案建立後，研究任何 Package 時必須檢查：維護狀態、License、安全紀錄、依賴負擔、資料傳輸、隱私與是否真的優於原生能力。GRDB、Nuke 與其他第三方套件目前均尚未選定。
 
 ## 16. Performance Notes
 
@@ -736,6 +777,10 @@ Apple 原生能力優先。Xcode 專案建立後，研究任何 Package 時必�
 | Delete failure | Bookmark 保留，畫面回復一致狀態 |
 
 ## 18. Accessibility Engineering
+
+**Phase 1（Web）：** 所有主要文字使用相對單位（`rem`），跟隨瀏覽器文字縮放；最小實際產品字級對應 Caption 12px 等效值，不得以 8–9px 實作。
+
+**Native Phase（Phase 2）：**
 
 - 所有主要文字使用 iOS Text Style／Dynamic Type。
 - 最小實際產品字級 Caption 12 pt；不得以 8–9 px 實作。
@@ -780,33 +825,43 @@ Apple 原生能力優先。Xcode 專案建立後，研究任何 Package 時必�
 
 ## 20. Technical Acceptance Criteria
 
-- [ ] Xcode Project、主 App Target、Share Extension Target 與 App Group 建立後，兩者可讀寫同一共享本機資料來源。
-- [ ] Share Extension 寫入成功後主 App 可立即看到 Bookmark。
+### 20A. Phase 1（Web／PWA，現行）
+
+- [ ] Dexie Schema v1 建立，主 App 頁面與 Service Worker 讀寫同一份 IndexedDB。
+- [ ] 貼上網址收藏成功後，收藏列表可立即看到 Bookmark。
 - [ ] Metadata 失敗不造成資料遺失或卡片破版。
 - [ ] Bookmark、Category、Tag、BookmarkTag 關聯完整且無孤立資料。
 - [ ] `lastOpenedAt` 更新點與不更新點符合 BR-009。
-- [ ] Daily Recall 不需要網路或 Server。
-- [ ] 通知點擊直接進今日回顧。
+- [ ] Daily Recall（應用內今日回顧）不需要網路或 Server。
 - [ ] 匯出包含 `lastOpenedAt` 且可處理 null。
 - [ ] 專用備份為單一 JSON，檔名符合規則，且含 `schemaVersion: 1`、`modelVersion: 1`、建立日期、App 版本、收藏數量、payload 與 SHA-256 checksum。
 - [ ] 讀取前執行 50 MB 大小檢查；未知非必要欄位忽略，必要欄位缺失拒絕。
 - [ ] 新版備份拒絕並提示更新 App；舊版只有明確 migration adapter 才可升級。
 - [ ] 匯入先驗證並預覽，只有使用者確認且 staging 全部成功後才執行受保護取代。
 - [ ] 所有匯入失敗與取消案例均保留現有資料。
-- [ ] 匯入不會自動在使用者的檔案 App 產生額外備份。
 - [ ] Phase 1 備份不含圖片二進位檔，只含圖片 URL、Metadata 與可恢復欄位。
-- [ ] 不含 Apple／Google／Email 登入、OAuth、CloudKit、Google Drive API、自有 Server、自動備份或同步架構。
-- [ ] 不含登入、同步、AI、Todo 或 Widget。
+- [ ] 不含登入、Cloud Sync、Push Notification、自有 Server、AI、Todo 或 Widget。
 - [ ] 不含 StoreKit、IAP、會員、訂閱、Paywall 或購買流程。
-- [ ] HTML Final 中已確認的 Light／Dark、Dynamic Type 與 44 pt 規則被落實。
+- [ ] Web App Manifest ＋ Service Worker 可安裝並支援離線開啟。
+- [ ] Light／Dark、文字縮放與 44px 觸控區規則被落實。
 - [ ] 所有必要自動化測試與 GitHub Actions 檢查通過。
+
+### 20B. Native Phase（Phase 2），尚未開始
+
+- [ ] Xcode Project、主 App Target、Share Extension Target 與 App Group 建立後，兩者可讀寫同一共享本機資料來源。
+- [ ] Share Extension 寫入成功後主 App 可立即看到 Bookmark。
+- [ ] 通知點擊直接進今日回顧。
+- [ ] 匯入不會自動在使用者的檔案 App 產生額外備份。
+- [ ] 不含 Apple／Google／Email 登入、OAuth、CloudKit、Google Drive API、自有 Server、自動備份或同步架構。
+- [ ] HTML Final 中已確認的 Light／Dark、Dynamic Type 與 44 pt 規則被落實。
+- [ ] 其餘資料完整性、備份契約與商業邊界準則與 20A 相同。
 
 ## 21. Safety Review
 
 | 項目 | 狀態 | 說明 |
 |---|---|---|
 | Authentication | N/A | Phase 1 無帳號 |
-| Authorization | N/A／App sandbox | 單一裝置使用者；App Group 與兩個 Target 尚未建立，建立後僅限必要元件 |
+| Authorization | N/A／瀏覽器同源沙盒（Phase 1）；App sandbox（Phase 2，保留規劃） | Phase 1：單一 origin 隔離；Phase 2：App Group 與兩個 Target 尚未建立，建立後僅限必要元件 |
 | Private data | Action required | 使用 Data Protection、避免敏感 log 與通知內容 |
 | Destructive delete | Action required | Alert 確認、交易刪除、失敗回復 |
 | Export／backup privacy | Action required | 主動觸發、暫存清理、無隱藏欄位、不保存 File Provider 帳號或位置 |
@@ -819,7 +874,7 @@ Apple 原生能力優先。Xcode 專案建立後，研究任何 Package 時必�
 
 | ID | Issue |
 |---|---|
-| DEV-I01 | SwiftData、Core Data、原生 SQLite 或 GRDB 的持久化方案，以及 App Group shared container 實作，須在 Xcode 專案建立時評估；目前均未選定／未實作。 |
+| DEV-I01 | 〔Native Phase（Phase 2），保留規劃〕SwiftData、Core Data、原生 SQLite 或 GRDB 的持久化方案，以及 App Group shared container 實作，須在 Xcode 專案建立時評估；目前均未選定／未實作。 |
 | DEV-I02 | Daily Recall 邀請確切收藏門檻未定。 |
 | DEV-I03 | 從未開啟候選最低天數與每批固定數量未定。 |
 | DEV-I04 | 十則通知每日輪播的本機排程策略未定，不得引入 Server。 |
@@ -830,10 +885,17 @@ Apple 原生能力優先。Xcode 專案建立後，研究任何 Package 時必�
 | DEV-I10 | Analytics 與隱私策略未定；Phase 1 不得假設有事件後端。 |
 | DEV-I12 | 隱私權政策與使用條款的正式內容與公開 URL 待完成；完成前不得放置假連結。回報問題／提供建議已決定採 Email。 |
 
+### 22.1 Closed / Resolved（2026-08-27）
+
+- `DEV-I13`「Web Share Target API 是否列入 Phase 1 承諾範圍」已由本輪決策關閉：**不承諾**，正式收藏入口為貼上網址；見 Technical Architecture Proposal §23.3 Decision 1、`DECISION_LOG.md` 2026-08-27。
+- `DEV-I14`「Dexie Schema 是否於 P1-C1 一次建立 tags／bookmarkTags 空表」已由本輪決策關閉：**於 `P1-C1` 一次建立完整 Schema**（含 `tags`／`bookmarkTags`，即使尚未啟用），避免後續 Migration；見 Technical Architecture Proposal §23.3 Decision 2、`DECISION_LOG.md` 2026-08-27。
+
 ## 23. Revision History
 
 | Date | Revision | Change |
 |---|---:|---|
+| 2026-08-27 | 1.7 | 關閉 `DEV-I13`（Web Share Target 不承諾）與 `DEV-I14`（Dexie Schema 於 `P1-C1` 一次建立完整），移至 §22.1 Closed／Resolved；全文「Native Phase（Phase 2）」標示格式統一。 |
+| 2026-08-27 | 1.6 | Phase 1 平台由 iOS 改為 Web／PWA：新增 §2A／§10.0 Web 平台能力與收藏流程；App Group、Share Extension、iOS Local Notification、NotificationAuthorizationState 等章節保留並標記 Native Phase（Phase 2）；Technical Acceptance Criteria 依 Phase 拆分；新增 DEV-I13／I14。資料模型、Business Rules 與備份契約不變。 |
 | 2026-07-21 | 1.5 | 將持久化與第三方套件降為候選；備份改為 Domain Model 單一 JSON，補齊 50 MB、schema/model version 1、SHA-256、migration adapter、架構無關 staging／寫入鎖／rollback 與圖片排除規則。 |
 | 2026-07-20 | 1.4 | 定義專用備份資料結構、原生檔案介面、驗證、staging、跨程序鎖與原子性還原；禁止帳號、OAuth、CloudKit、雲端 API 與同步架構。 |
 | 2026-07-20 | 1.3 | 同步 AI Team Workflow：小居規格、Work 文件治理、小摳研究、阿克／扣哥單一工程師實作、Actions 檢查、Jenny 驗收。 |

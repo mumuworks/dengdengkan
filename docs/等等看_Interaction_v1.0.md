@@ -4,15 +4,16 @@
 |---|---|
 | 文件狀態 | Phase 1 開發基準 |
 | 產品版本 | v1.0 |
-| 文件修訂 | 1.3（2026-07-21 備份規格決策補完） |
-| UI 依據 | High Fidelity UI v1.1 Final |
+| 文件修訂 | 1.5（2026-08-27 Native Phase（Phase 2）標示格式統一） |
+| UI 依據 | High Fidelity UI v1.1 Final（互動語言持續適用，Phase 1 以 Web 元件實作） |
 | 導覽 | 收藏／洞洞板／搜尋／設定 |
+| 平台 | Phase 1：Web／PWA；Phase 2（Native）：iOS，保留全部既有規劃 |
 
 ## 1. Global Interaction Rules
 
-本文件定義 Phase 1 目標互動，不表示 Xcode Project、Share Extension Target 或 App Group 已存在；上述項目目前尚未建立。
+本文件定義 Phase 1（Web／PWA）目標互動；文件中標記「Native Phase（Phase 2）」的段落為既有 iOS 互動規劃，全數保留、不刪除，不表示 Xcode Project、Share Extension Target 或 App Group 已存在——上述項目目前尚未建立。
 
-- 使用 iOS 原生 NavigationStack、TabView、Sheet、Menu、Share Sheet 與系統通知行為。
+- Phase 1 使用瀏覽器原生的頁面導覽、Modal／Dialog、Menu、分享／下載介面；Phase 2（保留規劃）使用 iOS 原生 NavigationStack、TabView、Sheet、Menu、Share Sheet 與系統通知行為。
 - 所有觸控區至少 44 × 44 pt。
 - Bottom Navigation 固定四個 Tab；切換 Tab 保留各 Tab 捲動位置，再次點擊目前 Tab 回到頂部。
 - 正式 App 跟隨系統 Light／Dark 與 Dynamic Type，不提供 App 內外觀切換。
@@ -111,7 +112,21 @@
 - 沒有可用圖片時使用 Placeholder Token，不留不合理空白。
 - 首頁不顯示最近新增、最近瀏覽或收藏 Carousel。
 
-## 6. Share Extension
+## 6. 收藏入口
+
+### 6.0 Phase 1（Web／PWA）：貼上網址收藏
+
+| 項目 | 規格 |
+|---|---|
+| Trigger | 使用者在收藏首頁或專用輸入區貼上／輸入網址。 |
+| User Action | 可修改分類、輸入零或多個標籤、切換加入洞洞板，或直接點「幫我記住」。 |
+| System Response | 預設分類為「未整理」、標籤空白、洞洞板關閉；寫入本機 IndexedDB 後顯示完成回饋。 |
+| Navigation | 完成後留在目前頁面或返回收藏列表。 |
+| Exception Handling | Metadata 未完成不阻擋收藏；URL 無法解析或本機寫入失敗時保留輸入並提供清楚錯誤與重試。 |
+
+Web Share Target API（讓已安裝 PWA 出現在系統分享清單）列為技術評估項目，非 Phase 1 承諾功能，相容性落差見 Technical Architecture Proposal §23.3。
+
+### 6.1 Native Phase（Phase 2）：Share Extension
 
 | 項目 | 規格 |
 |---|---|
@@ -121,7 +136,7 @@
 | Navigation | 完成後回到來源 App；不強制開啟主 App。 |
 | Exception Handling | Metadata 未完成不阻擋收藏；URL 無法解析或本機寫入失敗時保留面板並提供清楚錯誤與重試。 |
 
-### 6.1 Share Validation
+### 6.2 Share Validation（Phase 1 ＋ Phase 2 共通規則）
 
 - `originalURL` 是網址收藏的必要資料。
 - Category 必有值；未操作時使用「未整理」。
@@ -130,11 +145,11 @@
 - 「幫我記住」不得因分類未手動選取、Tag 空白或 Metadata 尚未取得而停用。
 - 不提供大型收藏理由輸入區。
 
-### 6.2 Completion Feedback
+### 6.3 Completion Feedback
 
-- App Group 寫入成功後回饋「幫你記住了。」
+- 本機寫入成功後回饋「幫你記住了。」（Phase 2 為 App Group 寫入成功）。
 - 不延長成功動畫。
-- 若 Extension 結束前 Metadata 尚未完成，由後續本機流程接續。
+- 若儲存流程結束前 Metadata 尚未完成，由後續本機流程接續。
 
 ## 7. Clipboard URL Detection
 
@@ -153,7 +168,7 @@
 | Trigger | 點擊分類列表、搜尋結果、洞洞板卡片或今日回顧卡片。 |
 | User Action | 閱讀、編輯理由、釘選／取消釘選、開啟原文、分享、編輯或刪除。 |
 | System Response | 顯示閱讀式詳細頁；進入頁面即更新 `lastOpenedAt`。 |
-| Navigation | 返回來源列表；開啟原文 → 系統瀏覽器／來源 App；編輯 → 編輯流程；分享 → iOS Share Sheet。 |
+| Navigation | 返回來源列表；開啟原文 → 新分頁開啟原始網址；編輯 → 編輯流程；分享 → 瀏覽器原生分享（`navigator.share`，若支援）或複製連結（Phase 2 保留規劃：iOS Share Sheet）。 |
 | Exception Handling | 無理由時不顯示完整空白便利貼；無圖片／標題時使用 Metadata 替代狀態；原文無法開啟時顯示阻擋 Alert 並保留收藏。 |
 
 ### 8.1 Reason Note
@@ -283,7 +298,9 @@
 | Navigation | 完成後留在目前頁面；不進 Onboarding。 |
 | Exception Handling | 同一啟動週期不與剪貼簿提示重疊；門檻確切數字為 Open Issue。 |
 
-### 14.2 Notification Permission
+### 14.2 Notification Permission〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1（Web／PWA）不請求系統通知權限、不使用推播；每日回顧提醒僅為應用內偏好設定（見 14.2A）。以下為 Phase 2 保留規劃。
 
 | 項目 | 規格 |
 |---|---|
@@ -293,17 +310,29 @@
 | Navigation | 拒絕後可從設定點「前往系統設定」。 |
 | Exception Handling | 不重複呼叫不可再次顯示的系統授權視窗；設定 UI 以 `UNNotificationSettings` 真實狀態為準。 |
 
+### 14.2A Daily Recall Preference（Phase 1，Web／PWA）
+
+| 項目 | 規格 |
+|---|---|
+| Trigger | 使用者點「每天提醒我」，或設定頁主動啟用。 |
+| User Action | 確認啟用今日回顧提醒偏好。 |
+| System Response | 記錄使用者意圖（`dailyRecallEnabled`），不呼叫瀏覽器通知權限；下次開啟 App 時依偏好顯示「今日回顧」入口或邀請。 |
+| Navigation | 完成後留在目前頁面。 |
+| Exception Handling | 不得宣稱可在 App 未開啟時主動提醒使用者。 |
+
 ### 14.3 Daily Schedule
 
 | 項目 | 規格 |
 |---|---|
-| Trigger | 首次啟用或修改提醒時間。 |
+| Trigger | 首次啟用或修改提醒時間偏好。 |
 | User Action | 選擇時間。 |
-| System Response | 取消既有 Daily Recall 排程並建立新的每日一次排程；預設 20:00。 |
+| System Response | **Phase 1：** 更新本機儲存的偏好時間，僅作為「今日回顧」入口顯示邏輯的參考，不建立系統排程。**Phase 2（保留規劃）：** 取消既有 Daily Recall 排程並建立新的每日一次系統排程；預設 20:00。 |
 | Navigation | 返回設定。 |
-| Exception Handling | 排程失敗時不顯示已啟用假狀態；提示使用者再試一次。 |
+| Exception Handling | Phase 2 排程失敗時不顯示已啟用假狀態，提示使用者再試一次。 |
 
-### 14.4 Notification Tap
+### 14.4 Notification Tap〔Native Phase（Phase 2），保留規劃〕
+
+> Phase 1 無系統通知；使用者由 App 內收藏首頁或今日回顧入口主動進入，行為見 14.5。
 
 | 項目 | 規格 |
 |---|---|
@@ -329,9 +358,9 @@
 |---|---|
 | Trigger | 設定 → 匯出收藏。 |
 | User Action | 選擇 CSV 或 JSON，點「匯出收藏」。 |
-| System Response | 從本機資料建立檔案，完成後開啟 iOS Share Sheet。 |
-| Navigation | Share Sheet 完成或取消後回匯出頁。 |
-| Exception Handling | 建檔失敗顯示可恢復錯誤；不產生部分內容卻標示成功；使用者取消 Share Sheet 不視為錯誤。 |
+| System Response | 從本機資料建立檔案，完成後觸發瀏覽器下載，或於支援瀏覽器開啟原生分享／儲存介面。 |
+| Navigation | 下載或分享完成／取消後回匯出頁。 |
+| Exception Handling | 建檔失敗顯示可恢復錯誤；不產生部分內容卻標示成功；使用者取消下載或分享不視為錯誤。 |
 
 ### 15.1 Export Fields
 
@@ -354,17 +383,17 @@
 | 項目 | 規格 |
 |---|---|
 | Trigger | 設定 → 匯出備份。 |
-| User Action | 點「匯出備份」，在 iOS 系統介面選擇儲存或分享位置。 |
-| System Response | 從 Domain Model 建立不含圖片二進位檔的單一 JSON，檔名為 `等等看_Backup_YYYY-MM-DD_HHmm_v1.json`；成功建立後顯示系統 File Exporter／Share Sheet。只有系統回報完成匯出時，才更新「最近一次備份日期」。 |
-| Navigation | 系統介面完成或取消後返回設定。 |
-| Exception Handling | 建檔失敗不開啟空介面；使用者取消不視為失敗，也不更新最近備份日期。App 不判斷目的地是 iCloud Drive、我的 iPhone 或第三方 File Provider。 |
+| User Action | 點「匯出備份」；Phase 1（Web）於支援瀏覽器選擇儲存位置（File System Access API）或觸發下載；Phase 2（Native，保留規劃）在 iOS 系統介面選擇儲存或分享位置。 |
+| System Response | 從 Domain Model 建立不含圖片二進位檔的單一 JSON，檔名為 `等等看_Backup_YYYY-MM-DD_HHmm_v1.json`；成功建立後完成下載或顯示系統 File Exporter／Share Sheet。只有確認完成匯出時，才更新「最近一次備份日期」。 |
+| Navigation | 下載或系統介面完成／取消後返回設定。 |
+| Exception Handling | 建檔失敗不開啟空介面；使用者取消不視為失敗，也不更新最近備份日期。App 不判斷目的地是本機資料夾、iCloud Drive、我的 iPhone 或第三方 File Provider。 |
 
 ### 16.2 Import Backup — File Selection and Validation
 
 | 項目 | 規格 |
 |---|---|
 | Trigger | 設定 → 匯入備份。 |
-| User Action | 從 iOS Document Picker 選取備份檔。 |
+| User Action | Phase 1（Web）從瀏覽器檔案選擇器（`<input type="file">` 或 File System Access API）選取備份檔；Phase 2（Native，保留規劃）從 iOS Document Picker 選取。 |
 | System Response | 先檢查檔案不得超過 50 MB，再將選取檔複製至受控暫存位置；驗證 JSON 格式、`schemaVersion`、`modelVersion`、SHA-256 checksum、必要欄位、資料型別、關聯完整性與支援版本。未知非必要欄位忽略；驗證期間不修改正式資料。 |
 | Navigation | 驗證成功 → 匯入預覽；取消 → 設定；驗證失敗 → 錯誤狀態。 |
 | Exception Handling | 無法存取、超過 50 MB、格式錯誤、checksum 不符、檔案不完整、版本不支援或資料關聯無效時停止流程，顯示「沒有匯入，原本的資料都還在。」並清理暫存檔。版本高於 App 支援範圍時提示更新 App；舊版沒有明確 migration adapter 時拒絕，不猜測轉換。 |
@@ -484,6 +513,8 @@
 
 | Date | Revision | Change |
 |---|---:|---|
+| 2026-08-27 | 1.5 | 統一全文 Native 內容標示格式為「Native Phase（Phase 2）」；無內容變更。 |
+| 2026-08-27 | 1.4 | Phase 1 平台由 iOS 改為 Web／PWA：收藏入口改為貼上網址、Daily Recall 改為應用內偏好（無系統通知）、匯出／備份改用瀏覽器檔案介面；原 iOS Share Extension／系統通知互動保留並標記 Native Phase（Phase 2）。核心收藏、分類、搜尋、洞洞板互動語言不變。 |
 | 2026-07-21 | 1.3 | 固定單一 JSON 備份互動；補齊 50 MB、schema/model version、SHA-256、版本更新提示、migration adapter、寫入鎖、無額外備份與 Email 回報規則。 |
 | 2026-07-20 | 1.2 | 新增專用備份匯出、檔案選擇、驗證、取代確認、原子性還原與設定頁狀態；不修改收藏核心流程。 |
 | 2026-07-20 | 1.1 | 移除 Phase 1 支持層級、StoreKit、Product ID、購買與恢復購買互動；支持畫面僅保留 Future／Optional 參考。 |
