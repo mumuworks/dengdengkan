@@ -51,6 +51,29 @@
   color: var(--color-text-tertiary);
 }
 
+.sectionHeaderRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.editTagsButton,
+.addTagsButton {
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  border: none;
+  background: transparent;
+  color: var(--color-brand-primary);
+  font-size: var(--type-footnote-size);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.addTagsButton {
+  min-height: 44px;
+  font-size: var(--type-callout-size);
+}
+
 .categoryChip {
   display: inline-block;
   padding: var(--space-1) var(--space-3);
@@ -71,12 +94,26 @@
 }
 
 .tagChip {
-  display: inline-block;
-  padding: var(--space-1) var(--space-3);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-3);
   border-radius: var(--radius-pill);
   background: var(--color-surface-secondary);
   color: var(--color-text-secondary);
   font-size: var(--type-footnote-size);
+}
+
+.tagRemove {
+  min-width: 20px;
+  min-height: 20px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: var(--type-callout-size);
+  line-height: 1;
+  cursor: pointer;
 }
 
 .createdAt {

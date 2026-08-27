@@ -100,6 +100,31 @@ describe('DexieBookmarkRepository', () => {
     })
   })
 
+  describe('listPinned', () => {
+    it('returns only bookmarks with isPinnedToBoard === true', async () => {
+      const pinned = await repo.create({ originalURL: 'https://example.com/pinned', isPinnedToBoard: true })
+      await repo.create({ originalURL: 'https://example.com/unpinned' })
+
+      const results = await repo.listPinned()
+
+      expect(results.map((b) => b.id)).toEqual([pinned.id])
+    })
+
+    it('returns an empty array when nothing is pinned', async () => {
+      await repo.create({ originalURL: 'https://example.com/unpinned-only' })
+      expect(await repo.listPinned()).toEqual([])
+    })
+
+    it('reflects unpinning immediately', async () => {
+      const created = await repo.create({ originalURL: 'https://example.com/toggle', isPinnedToBoard: true })
+      expect(await repo.listPinned()).toHaveLength(1)
+
+      await repo.update(created.id, { isPinnedToBoard: false })
+
+      expect(await repo.listPinned()).toEqual([])
+    })
+  })
+
   describe('listTags', () => {
     it('returns the Tags associated with a bookmark via BookmarkTag', async () => {
       const created = await repo.create({ originalURL: 'https://example.com/j' })
