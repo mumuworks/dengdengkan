@@ -1,24 +1,56 @@
 import { EmptyState } from '../components/feedback/EmptyState'
+import { PasteUrlForm } from '../features/collect/PasteUrlForm'
+import { useBookmarks } from '../hooks/useBookmarks'
+import { bookmarkRepository } from '../app/container'
+import styles from './HomeRoute.module.css'
 
 /**
- * 收藏首頁 skeleton (Design Spec §24 Screen 5 / 15). Home Sticky Note and Category
- * Preview Cards are P1-C2 scope (Core Collection); this Slice only proves navigation,
- * layout and the empty state.
+ * 收藏首頁 (Design Spec §24 Screen 5). The full fixed structure (Home Sticky Note +
+ * Category Preview Cards, PRD §9.2) is P1-C2 scope; this Slice closes the P1-C1
+ * Blocker identified in review — Technical Architecture §23.6 / Developer Handoff
+ * §20A require a working "貼上網址收藏 → 最小收藏列表 → reload 後仍存在" vertical
+ * flow, which is now wired via PasteUrlForm → bookmarkRepository → useBookmarks.
  *
- * Empty-state explanation text is adapted from Design Spec §15 ("從分享選單交給《等等看》")
- * to the paste-URL entry point, since DECISION_LOG.md 2026-08-27 Decision 1 fixes Phase 1's
- * collection entry as "貼上網址", not Web Share Target — the Decision Log outranks Design Spec
- * copy in the Source of Truth hierarchy (README §3).
+ * The Empty State's optional action ("看看怎麼收藏") is intentionally omitted:
+ * its concrete presentation is an open, undecided issue (Design Spec DES-I03 /
+ * Interaction Spec INT-I05 — "不得改成大型 Onboarding"), so rather than invent a
+ * behavior for it, the real, fully-specified paste-URL entry (Interaction §6.0)
+ * is shown directly instead.
+ *
+ * List items are plain text (title-or-URL only, per §5 "無 metadata 來源時顯示
+ * URL"): no image/click-through, since Bookmark Detail and full Collection Cards
+ * are explicitly P1-C2 scope.
  */
 export function HomeRoute() {
+  const { bookmarks, refresh } = useBookmarks()
+
+  const handleCreate = async (url: string) => {
+    await bookmarkRepository.create({ originalURL: url })
+    await refresh()
+  }
+
   return (
     <section>
       <h1>收藏</h1>
-      <EmptyState
-        title="還沒有收藏任何內容。"
-        explanation="看到喜歡的內容，貼上網址交給《等等看》。"
-        actionLabel="看看怎麼收藏"
-      />
+
+      <div className={styles.form}>
+        <PasteUrlForm onSubmit={handleCreate} />
+      </div>
+
+      {bookmarks === null ? null : bookmarks.length === 0 ? (
+        <EmptyState
+          title="還沒有收藏任何內容。"
+          explanation="看到喜歡的內容，貼上網址交給《等等看》。"
+        />
+      ) : (
+        <ul className={styles.list}>
+          {bookmarks.map((bookmark) => (
+            <li key={bookmark.id} className={styles.listItem}>
+              {bookmark.title ?? bookmark.originalURL}
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   )
 }
