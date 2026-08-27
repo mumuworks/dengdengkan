@@ -3,12 +3,15 @@ import { useParams, useNavigate, Link } from 'react-router'
 import { useBookmarkDetail } from '../hooks/useBookmarkDetail'
 import { useCategory } from '../hooks/useCategory'
 import { useBookmarkTags } from '../hooks/useBookmarkTags'
-import { bookmarkRepository } from '../app/container'
+import { useAllTags } from '../hooks/useAllTags'
+import { bookmarkRepository, tagRepository } from '../app/container'
 import { ReasonNote } from '../features/bookmark-detail/ReasonNote'
+import { TagPicker } from '../features/bookmark-detail/TagPicker'
 import { shareBookmark } from '../features/bookmark-detail/share'
 import { EmptyState } from '../components/feedback/EmptyState'
 import { getDisplayHost } from '../utils/url'
 import { formatDate } from '../utils/formatDate'
+import type { Tag } from '../domain/tag'
 import styles from './BookmarkDetailRoute.module.css'
 
 const METADATA_STATUS_TEXT: Record<'pending' | 'failed', string> = {
@@ -26,8 +29,10 @@ export function BookmarkDetailRoute() {
   const navigate = useNavigate()
   const { bookmark, refresh } = useBookmarkDetail(id)
   const category = useCategory(bookmark?.categoryId)
-  const tags = useBookmarkTags(bookmark?.id)
+  const { tags, refresh: refreshTags } = useBookmarkTags(bookmark?.id)
+  const { tags: allTags, refresh: refreshAllTags } = useAllTags()
   const [shareStatus, setShareStatus] = useState<string | null>(null)
+  const [pickerOpen, setPickerOpen] = useState(false)
 
   if (bookmark === undefined) return null
 
@@ -79,6 +84,23 @@ export function BookmarkDetailRoute() {
     navigate(-1)
   }
 
+  const handleAssignExisting = async (tag: Tag) => {
+    await tagRepository.assign(bookmark.id, tag.id)
+    await refreshTags()
+  }
+
+  const handleCreateAndAssign = async (name: string) => {
+    const tag = await tagRepository.findOrCreate(name)
+    await tagRepository.assign(bookmark.id, tag.id)
+    await refreshTags()
+    await refreshAllTags()
+  }
+
+  const handleRemoveTag = async (tagId: string) => {
+    await tagRepository.removeAssociation(bookmark.id, tagId)
+    await refreshTags()
+  }
+
   return (
     <section>
       <Link to="/" className={styles.back}>
@@ -108,18 +130,37 @@ export function BookmarkDetailRoute() {
         </div>
       ) : null}
 
-      {tags && tags.length > 0 ? (
-        <div className={styles.section}>
-          <p className={styles.sectionLabel}>標籤</p>
-          <ul className={styles.tagList}>
-            {tags.map((tag) => (
-              <li key={tag.id} className={styles.tagChip}>
-                {tag.name}
-              </li>
-            ))}
-          </ul>
-        </div>
-      ) : null}
+      <div className={styles.section}>
+        {tags && tags.length > 0 ? (
+          <>
+            <div className={styles.sectionHeaderRow}>
+              <p className={styles.sectionLabel}>標籤</p>
+              <button type="button" className={styles.editTagsButton} onClick={() => setPickerOpen(true)}>
+                編輯標籤
+              </button>
+            </div>
+            <ul className={styles.tagList}>
+              {tags.map((tag) => (
+                <li key={tag.id} className={styles.tagChip}>
+                  <span>{tag.name}</span>
+                  <button
+                    type="button"
+                    className={styles.tagRemove}
+                    aria-label={`移除標籤 ${tag.name}`}
+                    onClick={() => handleRemoveTag(tag.id)}
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        ) : tags && tags.length === 0 ? (
+          <button type="button" className={styles.addTagsButton} onClick={() => setPickerOpen(true)}>
+            新增標籤
+          </button>
+        ) : null}
+      </div>
 
       <p className={styles.createdAt}>收藏於 {formatDate(bookmark.createdAt)}</p>
 
@@ -144,6 +185,16 @@ export function BookmarkDetailRoute() {
           刪除收藏
         </button>
       </div>
+
+      {pickerOpen && allTags ? (
+        <TagPicker
+          allTags={allTags}
+          assignedTagIds={new Set((tags ?? []).map((tag) => tag.id))}
+          onAssignExisting={handleAssignExisting}
+          onCreateAndAssign={handleCreateAndAssign}
+          onClose={() => setPickerOpen(false)}
+        />
+      ) : null}
     </section>
   )
 }

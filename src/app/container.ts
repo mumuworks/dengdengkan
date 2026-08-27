@@ -3,6 +3,7 @@ import {
   DexieBookmarkRepository,
   DexieCategoryRepository,
   DexieSettingsRepository,
+  DexieTagRepository,
 } from '../repositories/dexie'
 
 /**
@@ -12,3 +13,4 @@ import {
 export const bookmarkRepository = new DexieBookmarkRepository(db)
 export const categoryRepository = new DexieCategoryRepository(db)
 export const settingsRepository = new DexieSettingsRepository(db)
+export const tagRepository = new DexieTagRepository(db)

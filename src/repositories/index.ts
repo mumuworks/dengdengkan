@@ -1,4 +1,5 @@
 export type { BookmarkRepository } from './BookmarkRepository'
 export type { CategoryRepository } from './CategoryRepository'
 export type { SettingsRepository } from './SettingsRepository'
+export type { TagRepository } from './TagRepository'
 export * from './dexie'

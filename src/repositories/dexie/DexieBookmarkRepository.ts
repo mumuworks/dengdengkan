@@ -51,6 +51,15 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     return this.db.bookmarks.where('categoryId').equals(categoryId).toArray()
   }
 
+  /**
+   * Uses `.filter()` rather than the `isPinnedToBoard` index: booleans are not a
+   * valid IndexedDB key type, so relying on that index would be fragile. A linear
+   * scan is fine at Phase 1 scale (Technical Architecture Proposal §9.4).
+   */
+  async listPinned(): Promise<Bookmark[]> {
+    return this.db.bookmarks.filter((bookmark) => bookmark.isPinnedToBoard).toArray()
+  }
+
   async update(
     id: string,
     changes: Partial<Omit<Bookmark, 'id' | 'createdAt'>>,
