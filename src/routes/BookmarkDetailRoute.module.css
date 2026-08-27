@@ -1,0 +1,123 @@
+.back {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+  color: var(--color-text-secondary);
+  font-size: var(--type-callout-size);
+  text-decoration: none;
+}
+
+.image,
+.imagePlaceholder {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: var(--radius-large);
+  object-fit: cover;
+  background: var(--color-placeholder);
+  margin: var(--space-4) 0;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--type-title2-size);
+  line-height: var(--type-title2-line);
+  font-weight: 600;
+  color: var(--color-text-primary);
+  overflow-wrap: anywhere;
+}
+
+.metaRow {
+  margin: var(--space-2) 0 0;
+  display: flex;
+  gap: var(--space-2);
+  align-items: baseline;
+  font-size: var(--type-subheadline-size);
+  line-height: var(--type-subheadline-line);
+  color: var(--color-text-secondary);
+}
+
+.metadataStatus {
+  color: var(--color-text-tertiary);
+}
+
+.section {
+  margin-top: var(--space-6);
+}
+
+.sectionLabel {
+  margin: 0 0 var(--space-2);
+  font-size: var(--type-footnote-size);
+  line-height: var(--type-footnote-line);
+  color: var(--color-text-tertiary);
+}
+
+.categoryChip {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-brand-soft);
+  color: var(--color-brand-primary);
+  font-size: var(--type-footnote-size);
+  font-weight: 600;
+}
+
+.tagList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.tagChip {
+  display: inline-block;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  background: var(--color-surface-secondary);
+  color: var(--color-text-secondary);
+  font-size: var(--type-footnote-size);
+}
+
+.createdAt {
+  margin: 0;
+  font-size: var(--type-footnote-size);
+  line-height: var(--type-footnote-line);
+  color: var(--color-text-tertiary);
+}
+
+.actions {
+  margin-top: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.actionButton,
+.actionLink {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-medium);
+  background: var(--color-surface-primary);
+  color: var(--color-text-primary);
+  text-align: center;
+  text-decoration: none;
+  font-size: var(--type-body-size);
+  cursor: pointer;
+}
+
+.destructiveButton {
+  composes: actionButton;
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+
+.shareStatus {
+  margin: 0;
+  text-align: center;
+  font-size: var(--type-footnote-size);
+  color: var(--color-text-secondary);
+}

@@ -2,6 +2,7 @@ import type { AppDatabase } from '../../db/AppDatabase'
 import type { BookmarkRepository } from '../BookmarkRepository'
 import type { Bookmark, NewBookmarkInput } from '../../domain/bookmark'
 import { SYSTEM_UNORGANIZED_CATEGORY_ID } from '../../domain/category'
+import type { Tag } from '../../domain/tag'
 import { generateId } from '../../utils/id'
 
 function normalizeReason(reason: string | null | undefined): string | null {
@@ -46,6 +47,10 @@ export class DexieBookmarkRepository implements BookmarkRepository {
     return this.db.bookmarks.toArray()
   }
 
+  async listByCategory(categoryId: string): Promise<Bookmark[]> {
+    return this.db.bookmarks.where('categoryId').equals(categoryId).toArray()
+  }
+
   async update(
     id: string,
     changes: Partial<Omit<Bookmark, 'id' | 'createdAt'>>,
@@ -70,5 +75,12 @@ export class DexieBookmarkRepository implements BookmarkRepository {
       await this.db.bookmarkTags.where('bookmarkId').equals(id).delete()
       await this.db.bookmarks.delete(id)
     })
+  }
+
+  async listTags(bookmarkId: string): Promise<Tag[]> {
+    const associations = await this.db.bookmarkTags.where('bookmarkId').equals(bookmarkId).toArray()
+    if (associations.length === 0) return []
+    const tags = await this.db.tags.bulkGet(associations.map((a) => a.tagId))
+    return tags.filter((tag): tag is Tag => tag !== undefined)
   }
 }

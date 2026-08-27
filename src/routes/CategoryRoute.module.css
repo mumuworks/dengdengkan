@@ -1,0 +1,24 @@
+.back {
+  display: inline-block;
+  min-height: 44px;
+  line-height: 44px;
+  color: var(--color-text-secondary);
+  font-size: var(--type-callout-size);
+  text-decoration: none;
+}
+
+.count {
+  margin: 0 0 var(--space-6);
+  color: var(--color-text-secondary);
+  font-size: var(--type-subheadline-size);
+  line-height: var(--type-subheadline-line);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
