@@ -76,4 +76,46 @@ describe('DexieBookmarkRepository', () => {
     expect(await repo.getById(created.id)).toBeUndefined()
     expect(await db.bookmarkTags.where('bookmarkId').equals(created.id).count()).toBe(0)
   })
+
+  describe('listByCategory', () => {
+    it('returns only bookmarks in the given category', async () => {
+      await db.categories.add({
+        id: 'cat-other',
+        name: '其他',
+        isSystem: false,
+        sortOrder: 1,
+        createdAt: '',
+        updatedAt: '',
+      })
+      const inSystem = await repo.create({ originalURL: 'https://example.com/h' })
+      await repo.create({ originalURL: 'https://example.com/i', categoryId: 'cat-other' })
+
+      const results = await repo.listByCategory(SYSTEM_UNORGANIZED_CATEGORY_ID)
+
+      expect(results.map((b) => b.id)).toEqual([inSystem.id])
+    })
+
+    it('returns an empty array for a category with no bookmarks', async () => {
+      expect(await repo.listByCategory('no-such-category')).toEqual([])
+    })
+  })
+
+  describe('listTags', () => {
+    it('returns the Tags associated with a bookmark via BookmarkTag', async () => {
+      const created = await repo.create({ originalURL: 'https://example.com/j' })
+      await db.tags.add({ id: 'tag-a', name: '旅遊', createdAt: '', updatedAt: '' })
+      await db.tags.add({ id: 'tag-b', name: '美食', createdAt: '', updatedAt: '' })
+      await db.bookmarkTags.add({ bookmarkId: created.id, tagId: 'tag-a', createdAt: '' })
+      await db.bookmarkTags.add({ bookmarkId: created.id, tagId: 'tag-b', createdAt: '' })
+
+      const tags = await repo.listTags(created.id)
+
+      expect(tags.map((t) => t.name).sort()).toEqual(['旅遊', '美食'])
+    })
+
+    it('returns an empty array when a bookmark has no tags', async () => {
+      const created = await repo.create({ originalURL: 'https://example.com/k' })
+      expect(await repo.listTags(created.id)).toEqual([])
+    })
+  })
 })

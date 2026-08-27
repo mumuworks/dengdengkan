@@ -9,6 +9,13 @@ import { db } from '../db'
  * bookmarkRepository.create() → IndexedDB → list() → Home displays it → data
  * survives a simulated reload. Uses the real Dexie/IndexedDB stack (fake-indexeddb),
  * not mocks, so persistence is proven against actual storage, not React state.
+ *
+ * P1-C2a note: Home no longer lists individual bookmarks directly (PRD §9.2 — Home
+ * shows Category Preview Cards, not a bookmark list). "Visible on Home" assertions
+ * below check the 未整理 Category Preview Card's count instead; the bookmark's own
+ * visibility (title/URL text) is covered in CategoryFlow.test.tsx, which drills into
+ * the category. This keeps the same persistence guarantees while matching where the
+ * bookmark is actually rendered post-P1-C2a.
  */
 describe('Home paste-URL collection flow', () => {
   beforeEach(async () => {
@@ -25,16 +32,17 @@ describe('Home paste-URL collection flow', () => {
     expect(await screen.findByText('還沒有收藏任何內容。')).toBeInTheDocument()
   })
 
-  it('creates a bookmark from a valid URL and shows it immediately, replacing the empty state', async () => {
+  it('creates a bookmark from a valid URL and reflects it in the 未整理 category card, replacing the empty state', async () => {
     render(<App />)
     await screen.findByText('還沒有收藏任何內容。')
+    expect(screen.getByRole('link', { name: /未整理/ })).toHaveTextContent('0 筆收藏')
 
     fireEvent.change(screen.getByLabelText('貼上網址'), {
       target: { value: 'https://example.com/a' },
     })
     fireEvent.click(screen.getByRole('button', { name: '幫我記住' }))
 
-    expect(await screen.findByText('https://example.com/a')).toBeInTheDocument()
+    expect(await screen.findByText('1 筆收藏')).toBeInTheDocument()
     expect(screen.queryByText('還沒有收藏任何內容。')).not.toBeInTheDocument()
     expect(await db.bookmarks.count()).toBe(1)
   })
@@ -61,7 +69,7 @@ describe('Home paste-URL collection flow', () => {
       target: { value: 'https://example.com/persisted' },
     })
     fireEvent.click(screen.getByRole('button', { name: '幫我記住' }))
-    await screen.findByText('https://example.com/persisted')
+    await screen.findByText('1 筆收藏')
 
     // Simulate a reload: unmount the tree and cycle the actual IndexedDB
     // connection closed/open, rather than only re-rendering React state.
@@ -71,7 +79,7 @@ describe('Home paste-URL collection flow', () => {
 
     render(<App />)
 
-    expect(await screen.findByText('https://example.com/persisted')).toBeInTheDocument()
+    expect(await screen.findByText('1 筆收藏')).toBeInTheDocument()
     expect(screen.queryByText('還沒有收藏任何內容。')).not.toBeInTheDocument()
   })
 })

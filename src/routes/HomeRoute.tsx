@@ -1,56 +1,63 @@
 import { EmptyState } from '../components/feedback/EmptyState'
+import { CategoryPreviewCard } from '../components/content/CategoryPreviewCard'
+import { HomeStickyNote } from '../features/home/HomeStickyNote'
 import { PasteUrlForm } from '../features/collect/PasteUrlForm'
-import { useBookmarks } from '../hooks/useBookmarks'
+import { useHomeCategories } from '../hooks/useHomeCategories'
 import { bookmarkRepository } from '../app/container'
 import styles from './HomeRoute.module.css'
 
 /**
- * 收藏首頁 (Design Spec §24 Screen 5). The full fixed structure (Home Sticky Note +
- * Category Preview Cards, PRD §9.2) is P1-C2 scope; this Slice closes the P1-C1
- * Blocker identified in review — Technical Architecture §23.6 / Developer Handoff
- * §20A require a working "貼上網址收藏 → 最小收藏列表 → reload 後仍存在" vertical
- * flow, which is now wired via PasteUrlForm → bookmarkRepository → useBookmarks.
+ * 收藏首頁 (Design Spec §24 Screen 5 / PRD §9.2): title, single Home Sticky Note,
+ * Category Preview Cards as the primary browsing entry, Bottom Navigation (via
+ * AppShell). No most-recent/most-viewed list or carousel (PRD §9.2).
  *
- * The Empty State's optional action ("看看怎麼收藏") is intentionally omitted:
- * its concrete presentation is an open, undecided issue (Design Spec DES-I03 /
- * Interaction Spec INT-I05 — "不得改成大型 Onboarding"), so rather than invent a
- * behavior for it, the real, fully-specified paste-URL entry (Interaction §6.0)
- * is shown directly instead.
- *
- * List items are plain text (title-or-URL only, per §5 "無 metadata 來源時顯示
- * URL"): no image/click-through, since Bookmark Detail and full Collection Cards
- * are explicitly P1-C2 scope.
+ * The paste-URL entry point (Interaction §6.0) established in P1-C1 is kept as-is;
+ * Category Preview Cards are the P1-C2a addition. Design Spec Screen 15 (首次使用)
+ * shows Home Note + 未整理 + a compact Empty State together, so the Empty State
+ * below supplements the category cards rather than replacing them.
  */
 export function HomeRoute() {
-  const { bookmarks, refresh } = useBookmarks()
+  const { categories, refresh: refreshCategories } = useHomeCategories()
+  const totalCount = categories === null ? null : categories.reduce((sum, c) => sum + c.count, 0)
 
   const handleCreate = async (url: string) => {
     await bookmarkRepository.create({ originalURL: url })
-    await refresh()
+    await refreshCategories()
   }
 
   return (
     <section>
       <h1>收藏</h1>
 
+      <div className={styles.note}>
+        <HomeStickyNote />
+      </div>
+
       <div className={styles.form}>
         <PasteUrlForm onSubmit={handleCreate} />
       </div>
 
-      {bookmarks === null ? null : bookmarks.length === 0 ? (
-        <EmptyState
-          title="還沒有收藏任何內容。"
-          explanation="看到喜歡的內容，貼上網址交給《等等看》。"
-        />
-      ) : (
-        <ul className={styles.list}>
-          {bookmarks.map((bookmark) => (
-            <li key={bookmark.id} className={styles.listItem}>
-              {bookmark.title ?? bookmark.originalURL}
+      {categories === null ? null : (
+        <ul className={styles.categoryList}>
+          {categories.map(({ category, count, previewImageUrls }) => (
+            <li key={category.id}>
+              <CategoryPreviewCard
+                categoryId={category.id}
+                name={category.name}
+                count={count}
+                previewImageUrls={previewImageUrls}
+              />
             </li>
           ))}
         </ul>
       )}
+
+      {totalCount === 0 ? (
+        <EmptyState
+          title="還沒有收藏任何內容。"
+          explanation="看到喜歡的內容，貼上網址交給《等等看》。"
+        />
+      ) : null}
     </section>
   )
 }
