@@ -1,0 +1,114 @@
+/**
+ * Design tokens extracted from docs/等等看_Design_Spec_v1.0.md §3–§7.
+ * Values are placeholders where the spec does not yet define a final asset
+ * (see Design Spec DES-I06); do not invent additional brand tokens here.
+ */
+:root {
+  /* Color — Brand */
+  --color-brand-primary: #9b4a36;
+  --color-brand-primary-pressed: #813b2b;
+  --color-brand-soft: #f2e3dc;
+  --color-brand-on-primary: #ffffff;
+
+  /* Color — Surface and Text */
+  --color-surface-canvas: #f8f6f1;
+  --color-surface-primary: #ffffff;
+  --color-surface-secondary: #f0ede7;
+  --color-surface-overlay: rgba(30, 27, 24, 0.32);
+  --color-text-primary: #282521;
+  --color-text-secondary: #6e6861;
+  --color-text-tertiary: #918a82;
+  --color-border-subtle: #e3ded6;
+  --color-icon-primary: #3c3833;
+  --color-icon-secondary: #777069;
+  --color-placeholder: #ddd8d0;
+
+  /* Color — Semantic */
+  --color-success: #3f7255;
+  --color-success-soft: #e4eee7;
+  --color-warning: #946515;
+  --color-warning-soft: #f5ebd5;
+  --color-error: #b33a3a;
+  --color-error-soft: #f6e1df;
+
+  /* Typography (base sizes in rem so browser text scaling / zoom applies) */
+  --type-large-title-size: 2.125rem; /* 34px */
+  --type-large-title-line: 2.5625rem;
+  --type-title1-size: 1.75rem; /* 28px */
+  --type-title1-line: 2.125rem;
+  --type-title2-size: 1.375rem; /* 22px */
+  --type-title2-line: 1.75rem;
+  --type-title3-size: 1.25rem; /* 20px */
+  --type-title3-line: 1.5625rem;
+  --type-headline-size: 1.0625rem; /* 17px */
+  --type-headline-line: 1.375rem;
+  --type-body-size: 1.0625rem; /* 17px */
+  --type-body-line: 1.5rem;
+  --type-callout-size: 1rem; /* 16px */
+  --type-callout-line: 1.3125rem;
+  --type-subheadline-size: 0.9375rem; /* 15px */
+  --type-subheadline-line: 1.25rem;
+  --type-footnote-size: 0.8125rem; /* 13px */
+  --type-footnote-line: 1.125rem;
+  --type-caption-size: 0.75rem; /* 12px, minimum production size per §4 */
+  --type-caption-line: 1rem;
+
+  /* Spacing — 4pt grid */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+
+  /* Radius */
+  --radius-small: 0.5rem;
+  --radius-medium: 0.75rem;
+  --radius-large: 1rem;
+  --radius-x-large: 1.375rem;
+  --radius-pill: 999px;
+
+  /* Shadow */
+  --shadow-soft: 0 2px 10px rgba(36, 30, 24, 0.08);
+  --shadow-modal: 0 8px 28px rgba(36, 30, 24, 0.14);
+
+  /* Layout */
+  --layout-content-max-width: 480px;
+  --layout-page-padding-x: var(--space-5);
+  --layout-bottom-nav-height: 3.5rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-brand-primary: #d88b73;
+    --color-brand-primary-pressed: #e5a08b;
+    --color-brand-soft: #4b3029;
+    --color-brand-on-primary: #241916;
+
+    --color-surface-canvas: #171614;
+    --color-surface-primary: #23211e;
+    --color-surface-secondary: #2d2a26;
+    --color-surface-overlay: rgba(0, 0, 0, 0.56);
+    --color-text-primary: #f5f1ea;
+    --color-text-secondary: #bdb5ab;
+    --color-text-tertiary: #918a82;
+    --color-border-subtle: #3b3833;
+    --color-icon-primary: #eae4dc;
+    --color-icon-secondary: #aaa29a;
+    --color-placeholder: #393631;
+
+    --color-success: #78b58c;
+    --color-success-soft: #243d2e;
+    --color-warning: #d5a44c;
+    --color-warning-soft: #473718;
+    --color-error: #ea7771;
+    --color-error-soft: #4b2523;
+
+    --shadow-soft: 0 2px 12px rgba(0, 0, 0, 0.28);
+    --shadow-modal: 0 8px 30px rgba(0, 0, 0, 0.42);
+  }
+}

@@ -1,0 +1,28 @@
+.nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  height: calc(var(--layout-bottom-nav-height) + env(safe-area-inset-bottom));
+  padding-bottom: env(safe-area-inset-bottom);
+  background: var(--color-surface-primary);
+  border-top: 1px solid var(--color-border-subtle);
+}
+
+.item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  font-size: var(--type-footnote-size);
+  line-height: var(--type-footnote-line);
+  color: var(--color-text-secondary);
+  text-decoration: none;
+}
+
+.itemActive {
+  color: var(--color-brand-primary);
+  font-weight: 600;
+}
