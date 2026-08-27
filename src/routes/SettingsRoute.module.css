@@ -1,0 +1,35 @@
+.group {
+  margin-top: var(--space-8);
+}
+
+.groupTitle {
+  font-size: var(--type-footnote-size);
+  line-height: var(--type-footnote-line);
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-2);
+}
+
+.row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 44px;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: var(--type-body-size);
+}
+
+.rowLabel {
+  color: var(--color-text-primary);
+}
+
+.rowValue {
+  color: var(--color-text-secondary);
+}
+
+.notice {
+  font-size: var(--type-subheadline-size);
+  line-height: var(--type-subheadline-line);
+  color: var(--color-text-secondary);
+  margin: var(--space-2) 0 0;
+}

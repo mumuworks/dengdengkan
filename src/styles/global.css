@@ -1,0 +1,39 @@
+@import './tokens.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-surface-canvas);
+  color: var(--color-text-primary);
+  font-family:
+    -apple-system,
+    'Segoe UI',
+    'PingFang TC',
+    'Noto Sans TC',
+    system-ui,
+    sans-serif;
+  font-size: var(--type-body-size);
+  line-height: var(--type-body-line);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+a {
+  color: inherit;
+}
